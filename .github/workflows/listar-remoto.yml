@@ -1,20 +1,31 @@
-name: Listar arquivos do servidor
+name: Limpar arquivos antigos do servidor
 
-# Workflow temporário e somente leitura: lista o conteúdo de htdocs para
-# comparar com o repositório e descobrir o que sobrou de versões antigas.
+# Workflow temporário: remove sobras de versões anteriores que o deploy
+# não apaga (o primeiro deploy encontrou o servidor sem arquivo de estado
+# e, por segurança, não excluiu nada).
 on: workflow_dispatch
 
 jobs:
-  listar:
+  limpar:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Listar htdocs via FTP
+      - name: Remover órfãos via FTP
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp
-          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" \
-            -e "set ftp:ssl-allow no; cd htdocs; find .; bye"
+          lftp -u "$FTP_USERNAME","$FTP_PASSWORD" "$FTP_SERVER" -e "
+            set ftp:ssl-allow no;
+            cd htdocs;
+            echo '--- antes ---';
+            cls -1 assets/img/;
+            rm -f assets/img/logo.png;
+            echo '--- depois ---';
+            cls -1 assets/img/;
+            echo '--- raiz (confirmando que Conexao.php segue no lugar) ---';
+            cls -1 .;
+            bye
+          "
