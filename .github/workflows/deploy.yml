@@ -1,0 +1,42 @@
+name: Deploy para InfinityFree
+
+# Dispara a cada push na main. O workflow_dispatch permite rodar
+# manualmente pela aba Actions, útil para reenviar tudo sem um commit novo.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Enviar por FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+
+          # O painel da InfinityFree mostra htdocs como diretório do domínio
+          server-dir: htdocs/
+
+          # A InfinityFree gratuita não aceita FTPS; se aceitasse, o ideal
+          # seria protocol: ftps, porque em ftp simples a senha trafega
+          # sem criptografia
+          protocol: ftp
+
+          # A action sincroniza: o que não existe aqui é APAGADO no servidor.
+          # O Conexao.php vive só no servidor (guarda a senha do banco de
+          # produção e não está versionado), então precisa ficar de fora ou
+          # seria apagado a cada deploy e o site quebraria.
+          exclude: |
+            **/Conexao.php
+            **/.git*
+            **/.git*/**
+            **/.claude/**
+            **/CLAUDE.md
