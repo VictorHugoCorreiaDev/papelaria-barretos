@@ -51,6 +51,10 @@ require_once __DIR__ . '/../includes/footer.php';   // fecha .content, .main, .l
 
 Páginas puramente de leitura (`Estoque.php`, `ListarVendas.php`, `Relatorios.php`) não redirecionam e podem incluir o `header.php` logo após o `Conexao.php`.
 
+Toda página precisa terminar incluindo o `footer.php` — é ele que fecha `.content`, `.main` e `.layout`, emite `</body></html>` e carrega o `funcoes.js`.
+
+`includes/validacao.php` guarda validações reaproveitáveis entre páginas (hoje, a `dataValida()` usada pelo `Relatorios.php`). São funções globais, então inclua sempre com `require_once`.
+
 `auth.php` e `header.php` iniciam a sessão com a guarda `session_status() === PHP_SESSION_NONE`, então podem ser incluídos em qualquer ordem sem gerar aviso de sessão já ativa. O `header.php` também consome e limpa o `$_SESSION['toast']`. Páginas novas não precisam chamar `session_start()`.
 
 A `<div class="layout">` é aberta no `sidebar.php` (incluído pelo header) e fechada no `footer.php` — uma `</div>` desbalanceada em uma página quebra o layout visivelmente.
@@ -82,14 +86,17 @@ O estoque é alterado em três lugares, todos dentro de `beginTransaction()`/`co
 
 `pages/ExcluirProdutos.php` recusa excluir um produto que apareça em `vendas_produtos` (não há FK com cascade) e redireciona com `?erro=vinculado`.
 
-## Inconsistências conhecidas
+## Indicadores do dashboard
 
-Vale conhecer antes de mexer nessas áreas; corrija de propósito, não por acidente.
+Os quatro cards são renderizados pelo `dashboard.php` e reescritos pelo `atualizarCards()` do `funcoes.js` depois de cada venda rápida. Três coisas precisam continuar alinhadas:
 
-- **`ajax_venda_rapida.php` recalcula os indicadores sem o filtro `status = 'ativa'`** que o `dashboard.php` usa, então vendas canceladas contaminam os números atualizados via AJAX.
-- **`atualizarCards()` em `funcoes.js` procura por `#cardVendas`, `#cardReceitaTotal`, `#cardReceitaHoje` e `#cardTicketMedio`**, mas o `dashboard.php` renderiza esses `<span>` sem `id` — a atualização dos cards não faz nada, silenciosamente.
-- **`includes/footer.php` carrega o `funcoes.js` duas vezes** (e tem uma `</body>` duplicada); o `ListarVendas.php` acrescenta uma terceira tag `<script>`. Carregamentos duplicados registram o listener de submit do `#formVenda` mais de uma vez.
-- **O `Relatorios.php` define a função global `dataValida()`** no escopo do arquivo. Como as páginas não são carregadas duas vezes na mesma requisição isso não colide hoje, mas não replique o padrão sem mover a função para `includes/`.
+- Os `<span>` carregam os ids `cardVendas`, `cardReceitaTotal`, `cardReceitaHoje` e `cardTicketMedio` — é por eles que o JS acha os elementos.
+- Os valores monetários já saem do servidor com `R$`, porque o JS os reescreve com `Intl.NumberFormat`, que também traz o símbolo. Sem isso o card mudaria de formato entre o carregamento e a atualização.
+- O `ajax_venda_rapida.php` recalcula os indicadores com o mesmo `status = 'ativa'` que o `dashboard.php` usa. Divergir aí faz vendas canceladas entrarem só na versão atualizada por AJAX.
+
+## Carregamento do JavaScript
+
+O `footer.php` é o único lugar que carrega o `funcoes.js`, e toda página o inclui ao final. Não acrescente uma tag `<script>` própria: o arquivo registra o listener de submit do `#formVenda` no escopo global, então um segundo carregamento faria a venda rápida ser enviada duas vezes.
 
 ## Escape de saída
 

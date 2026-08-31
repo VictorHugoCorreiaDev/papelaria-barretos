@@ -1,14 +1,11 @@
-      </div> <!-- content -->
-      </div> <!-- main -->
-      </div> <!-- layout -->
+    </div> <!-- content -->
+    </div> <!-- main -->
+    </div> <!-- layout -->
 
-      </body>
+    <div id="toast" class="toast"></div>
 
-      <script src="/assets/js/funcoes.js"></script>
+    <script src="/assets/js/funcoes.js"></script>
 
-      <div id="toast" class="toast"></div>
-      <script src="/assets/js/funcoes.js"></script>
+</body>
 
-      </body>
-
-      </html>
+</html>

@@ -217,7 +217,6 @@ if ($totalRegistros > 0) {
     </div>
 </div>
 
-<script src="../assets/js/funcoes.js"></script>
 
 <br>
 <a href="ListarVendas.php" class="btn btn-secondary">

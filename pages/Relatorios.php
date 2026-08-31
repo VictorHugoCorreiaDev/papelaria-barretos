@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/validacao.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/header.php';
 
@@ -7,22 +8,9 @@ require_once __DIR__ . '/../includes/header.php';
 
 /*
  * As datas vêm da query string e são reimpressas nos inputs e nos links
- * de paginação. Validar o formato aqui corta o problema na raiz: o que
- * não for uma data Y-m-d real vira a data de hoje.
+ * de paginação. Validar o formato corta o problema na raiz: o que não for
+ * uma data Y-m-d real vira a data de hoje.
  */
-function dataValida($valor, $padrao)
-{
-    if (!is_string($valor)) {
-        return $padrao;
-    }
-
-    $data = DateTime::createFromFormat('Y-m-d', $valor);
-
-    return ($data && $data->format('Y-m-d') === $valor)
-        ? $valor
-        : $padrao;
-}
-
 $dataInicio = dataValida($_GET['inicio'] ?? null, date('Y-m-d'));
 $dataFim = dataValida($_GET['fim'] ?? null, date('Y-m-d'));
 
