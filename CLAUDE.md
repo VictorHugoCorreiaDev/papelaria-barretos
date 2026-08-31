@@ -24,10 +24,10 @@ Não há linter, executor de testes nem gerenciador de dependências. A verifica
 
 `Conexao.php` cria o handle PDO `$conn` (host/db/usuário/senha fixos no código, `ERRMODE_EXCEPTION`). O arquivo está listado no `.gitignore`, mas existe na árvore de trabalho — trate-o como configuração local, não como algo a versionar.
 
-Não há arquivo de schema no repositório. As tabelas que o código pressupõe:
+Não há arquivo `.sql` de schema, mas o `README.md` traz o DDL das quatro tabelas. As tabelas que o código pressupõe:
 
 - `usuarios(usuario, senha)` — `senha` é um hash bcrypt de `password_hash()`, verificado em `login.php`. Não existe tela de cadastro; usuários precisam ser inseridos manualmente.
-- `produtos(id, nome, preco, quantidade)` — `quantidade` é o estoque corrente.
+- `produtos(id, nome, preco, quantidade, created_at)` — `quantidade` é o estoque corrente; `created_at` existe na tabela mas nenhuma tela usa.
 - `vendas(id, total, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas.
 - `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario)` — `preco_unitario` congela o preço no momento da venda, de modo que totais históricos sobrevivem a alterações de preço.
 
