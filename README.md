@@ -42,7 +42,7 @@ Sem framework, sem Composer e sem etapa de build — basta o PHP e o banco.
 ### 1️⃣ Clone o repositório
 
 ```bash
-git clone https://github.com/HavocC-marcha/papelaria-barretos.git
+git clone https://github.com/VictorHugoCorreiaDev/papelaria-barretos.git
 ```
 
 ### 2️⃣ Acesse a pasta
