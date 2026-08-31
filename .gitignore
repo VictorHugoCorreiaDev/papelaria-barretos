@@ -1,0 +1,12 @@
+# Arquivo com senha do banco
+Conexao.php
+
+# Futuro (caso use)
+.env
+/vendor
+/node_modules
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,1173 @@
+/* =========================================================
+   Papelaria Barretos · Folha de estilo única
+   Design System: Cream Paper Ultramarine (Cachê)
+   Fonte dos tokens: cache-erp/frontend/src/colors_and_type.css
+
+   Regras do DS respeitadas aqui:
+   - Nenhum hex/rgb solto em componente: tudo sai de token.
+   - Branco puro não é superfície de tela (a mais clara é --bg-surface).
+   - Card e painel são chapados: separados por borda, sem box-shadow.
+     Só flutuante (modal, toast) mantém sombra.
+   - Foco visível em todo interativo, via --shadow-focus.
+
+   Os apelidos antigos (--primary, --text-gray, --radius-*, ...) continuam
+   existindo e apontam para os tokens novos, então o CSS inline que já está
+   nos PHPs (RegistrarVendas.php, Relatorios.php, login.php) segue valendo.
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+
+/* =========================================================
+   1. TOKENS · tema claro (padrão)
+   ========================================================= */
+
+:root {
+    /* ─── BRAND ──────────────────────────────────────── */
+    --brand-ultramarine: #322c85;
+    --brand-ultramarine-deep: #1f1b5c;
+    --brand-ultramarine-mid: #433ba8;
+    --brand-ultramarine-tint: #5B52E0;
+    --brand-ultramarine-pale: #E8E6FA;
+
+    --brand-marigold: #F5A524;
+    --brand-marigold-deep: #C77A00;
+    --brand-marigold-pale: #FCE8B8;
+
+    --brand-terracotta: #C2410C;
+    --brand-moss: #3F6B3A;
+
+    /* ─── NEUTROS · escala papel creme ───────────────── */
+    --paper-50: #FDFBF5;
+    --paper-100: #FAF6EE;
+    --paper-200: #F2EDE1;
+    --paper-300: #E6DFCE;
+    --paper-400: #C9C0AA;
+    --paper-500: #8E8778;
+    --paper-600: #5C574D;
+    --paper-700: #3A3731;
+    --paper-800: #1F1D1A;
+
+    /* ─── NEUTROS · escala tinta (superfícies do escuro) ─ */
+    --ink-950: #0E0B2E;
+    --ink-900: #141133;
+    --ink-800: #1D1945;
+    --ink-700: #2A2559;
+    --ink-600: #3C3674;
+    --ink-500: #625A9A;
+    --ink-400: #9A93C7;
+    --ink-300: #C9C4E3;
+    --ink-200: #E4E1F2;
+
+    /* ─── SEMÂNTICOS · claro ─────────────────────────── */
+    --bg-canvas: var(--paper-100);
+    --bg-surface: var(--paper-50);
+    --bg-raised: #FFFFFF;
+    --bg-sunken: var(--paper-200);
+    --bg-inverse: var(--ink-950);
+
+    --fg-1: var(--paper-800);
+    --fg-2: var(--paper-700);
+    --fg-3: var(--paper-600);
+    --fg-4: var(--paper-500);
+    --fg-on-brand: #FFFFFF;
+
+    --border-1: var(--paper-300);
+    --border-2: var(--paper-400);
+    --border-strong: var(--paper-700);
+
+    --accent: var(--brand-ultramarine);
+    --accent-hover: var(--brand-ultramarine-deep);
+    --accent-pressed: var(--brand-ultramarine-deep);
+    --accent-soft: var(--brand-ultramarine-pale);
+    --accent-fg: #FFFFFF;
+
+    --highlight: var(--brand-marigold);
+    --highlight-soft: var(--brand-marigold-pale);
+
+    --success: #2D6A4F;
+    --success-soft: #D6E9DD;
+    --warning: var(--brand-marigold-deep);
+    --warning-soft: var(--brand-marigold-pale);
+    --danger: #B00020;
+    --danger-soft: #F7DADA;
+    --info: #1F5AA8;
+    --info-soft: #DCE7F5;
+
+    /* ─── DERIVADOS (nenhuma cor nova: só combinações do DS) ─
+       Texto que cai em cima de um fundo sólido semântico e o véu
+       do modal, tirado do --ink-950. */
+    --on-accent: var(--accent-fg);
+    --on-success: var(--fg-on-brand);
+    --on-danger: var(--fg-on-brand);
+    --on-warning: var(--fg-on-brand);
+    --fg-inverse: var(--paper-50);
+    --scrim: rgba(14, 11, 46, 0.55);
+
+    /* ─── TIPOGRAFIA ─────────────────────────────────── */
+    --font-display: 'Fraunces', 'Cambria', Georgia, serif;
+    --font-sans: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+    --fs-12: 12px;
+    --fs-13: 13px;
+    --fs-14: 14px;
+    --fs-16: 16px;
+    --fs-18: 18px;
+    --fs-20: 20px;
+    --fs-24: 24px;
+    --fs-32: 32px;
+    --fs-40: 40px;
+    --fs-56: 56px;
+
+    --lh-tight: 1.1;
+    --lh-snug: 1.25;
+    --lh-normal: 1.45;
+    --lh-loose: 1.65;
+
+    --tracking-display: -0.03em;
+    --tracking-tight: -0.01em;
+    --tracking-normal: 0em;
+    --tracking-wide: 0.04em;
+    --tracking-caps: 0.08em;
+
+    /* ─── ESPAÇAMENTO ────────────────────────────────── */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* ─── RAIOS ──────────────────────────────────────── */
+    --r-xs: 4px;
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --r-xl: 20px;
+    --r-2xl: 28px;
+    --r-full: 9999px;
+
+    /* ─── SOMBRAS · só em elemento flutuante ─────────── */
+    --shadow-1: 0 1px 2px rgba(31, 27, 92, 0.05), 0 1px 1px rgba(31, 27, 92, 0.04);
+    --shadow-2: 0 2px 6px rgba(31, 27, 92, 0.06), 0 1px 2px rgba(31, 27, 92, 0.04);
+    --shadow-3: 0 8px 18px rgba(31, 27, 92, 0.08), 0 2px 4px rgba(31, 27, 92, 0.04);
+    --shadow-4: 0 18px 40px rgba(31, 27, 92, 0.12), 0 4px 8px rgba(31, 27, 92, 0.05);
+    --shadow-focus: 0 0 0 3px rgba(50, 44, 133, 0.25);
+
+    /* ─── MOVIMENTO ──────────────────────────────────── */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --dur-fast: 120ms;
+    --dur-med: 220ms;
+    --dur-slow: 420ms;
+
+    /* =====================================================
+       APELIDOS DE COMPATIBILIDADE
+       Nomes do design system antigo da papelaria. Continuam
+       válidos porque os PHPs usam alguns deles inline:
+         RegistrarVendas.php:230 e Relatorios.php:180 → --text-gray
+         login.php → --danger e --radius-sm
+       Como apontam para var(), acompanham o tema escuro sozinhos.
+       ===================================================== */
+    --primary: var(--accent);
+    --primary-dark: var(--accent-hover);
+
+    --bg-light: var(--bg-canvas);
+    --bg-white: var(--bg-surface);
+    --bg-card: var(--bg-surface);
+
+    --text-dark: var(--fg-1);
+    --text-gray: var(--fg-3);
+
+    --border-color: var(--border-1);
+
+    --radius-sm: var(--r-sm);
+    --radius-md: var(--r-md);
+    --radius-lg: var(--r-lg);
+}
+
+
+/* =========================================================
+   2. TOKENS · tema escuro
+   Ativa com <html data-theme="dark">. Só os semânticos mudam —
+   os apelidos acima seguem por referência, sem duplicação.
+   ========================================================= */
+
+[data-theme="dark"] {
+    --bg-canvas: #100E18;
+    --bg-surface: #16131F;
+    --bg-raised: #1C1830;
+    --bg-sunken: #0B0913;
+    --bg-inverse: var(--paper-50);
+
+    --fg-1: #F4F1FA;
+    --fg-2: #D6D1E4;
+    --fg-3: #A39DB8;
+    --fg-4: #736D88;
+    --fg-on-brand: #FFFFFF;
+
+    --border-1: #2A2540;
+    --border-2: #3A3458;
+    --border-strong: #4A4470;
+
+    --accent: #8B82FF;
+    --accent-hover: #A39BFF;
+    --accent-pressed: #6E66E6;
+    --accent-soft: rgba(139, 130, 255, 0.14);
+
+    --highlight: #F5A524;
+    --highlight-soft: rgba(245, 165, 36, 0.16);
+
+    --success: #5FD39E;
+    --success-soft: rgba(95, 211, 158, 0.15);
+    --warning: #F5A524;
+    --warning-soft: rgba(245, 165, 36, 0.16);
+    --danger: #FF7A7A;
+    --danger-soft: rgba(255, 122, 122, 0.14);
+    --info: #8FB8FF;
+    --info-soft: rgba(143, 184, 255, 0.16);
+
+    /* No escuro os semânticos são claros: o texto por cima vira tinta.
+       Sem isto, branco sobre o ultramarine clareado dá ~2,6:1 de contraste. */
+    --on-accent: var(--ink-950);
+    --on-success: var(--ink-950);
+    --on-danger: var(--ink-950);
+    --on-warning: var(--ink-950);
+    --fg-inverse: var(--paper-800);
+    --scrim: rgba(0, 0, 0, 0.7);
+
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.45);
+    --shadow-3: 0 8px 22px rgba(0, 0, 0, 0.5);
+    --shadow-4: 0 20px 48px rgba(0, 0, 0, 0.6);
+    --shadow-focus: 0 0 0 3px rgba(139, 130, 255, 0.4);
+}
+
+
+/* =========================================================
+   3. RESET E BASE
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    font-size: var(--fs-14);
+    line-height: var(--lh-normal);
+    background: var(--bg-canvas);
+    color: var(--fg-1);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+/* Foco visível em tudo que é interativo — o DS já traz o anel pronto. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+/* Mata o atraso de double-tap no toque. */
+a,
+button,
+input,
+select,
+textarea {
+    touch-action: manipulation;
+}
+
+
+/* =========================================================
+   4. TIPOGRAFIA
+   Display (Fraunces) em título e dinheiro; sans (Geist) no resto.
+   ========================================================= */
+
+h1,
+h2,
+h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--fg-1);
+    text-wrap: balance;
+}
+
+h1 {
+    font-size: var(--fs-40);
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-display);
+    font-variation-settings: "opsz" 96;
+    margin: 0 0 var(--space-6);
+}
+
+h2 {
+    font-size: var(--fs-32);
+    line-height: var(--lh-snug);
+    letter-spacing: var(--tracking-display);
+    font-variation-settings: "opsz" 48;
+    margin: 0 0 var(--space-6);
+}
+
+h3 {
+    font-size: var(--fs-20);
+    line-height: var(--lh-snug);
+    letter-spacing: var(--tracking-tight);
+    font-variation-settings: "opsz" 24;
+    margin: 0 0 var(--space-4);
+}
+
+h4 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: var(--fs-16);
+    color: var(--fg-1);
+    margin: 0 0 var(--space-3);
+}
+
+p {
+    color: var(--fg-2);
+    margin: 0 0 var(--space-4);
+}
+
+label {
+    display: block;
+    font-size: var(--fs-13);
+    font-weight: 500;
+    color: var(--fg-2);
+    margin-bottom: var(--space-2);
+}
+
+strong {
+    font-weight: 600;
+    color: var(--fg-1);
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border-1);
+    margin: var(--space-5) 0;
+}
+
+
+/* =========================================================
+   5. LAYOUT
+   ========================================================= */
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-canvas);
+}
+
+.content {
+    padding: var(--space-8) var(--space-10) var(--space-8) var(--space-12);
+}
+
+/* TOPBAR */
+.topbar {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-1);
+    padding: var(--space-3) var(--space-8);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.topbar-user {
+    background: var(--bg-sunken);
+    border: 1px solid var(--border-1);
+    color: var(--fg-2);
+    font-size: var(--fs-13);
+    font-weight: 500;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--r-full);
+}
+
+
+/* =========================================================
+   6. SIDEBAR
+   Cream Paper: a sidebar é a superfície mais clara da tela,
+   não um painel escuro. Separação por borda, sem sombra.
+   ========================================================= */
+
+.sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border-1);
+    color: var(--fg-2);
+    min-height: 100vh;
+    padding: var(--space-6) var(--space-5);
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: var(--space-2);
+}
+
+.logo img {
+    width: 170px;
+    max-width: 100%;
+    height: auto;
+}
+
+.sidebar nav {
+    margin-top: var(--space-3);
+}
+
+.sidebar nav a {
+    display: block;
+    color: var(--fg-2);
+    text-decoration: none;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--r-md);
+    margin-bottom: var(--space-1);
+    font-size: var(--fs-14);
+    font-weight: 500;
+    border: 1px solid transparent;
+    transition:
+        background-color var(--dur-fast) var(--ease-out),
+        color var(--dur-fast) var(--ease-out),
+        border-color var(--dur-fast) var(--ease-out);
+}
+
+.sidebar nav a:hover {
+    background: var(--bg-sunken);
+    color: var(--fg-1);
+}
+
+/* Item ativo — aplicado pelo includes/sidebar.php conforme a rota atual. */
+.sidebar nav a.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.sidebar nav a.logout {
+    color: var(--fg-3);
+}
+
+.sidebar nav a.logout:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.sidebar hr {
+    border-top: 1px solid var(--border-1);
+    margin: var(--space-5) 0;
+}
+
+/* No escuro o logo é navy sobre transparente: inverte pra continuar legível. */
+[data-theme="dark"] .logo img {
+    filter: brightness(0) invert(1);
+}
+
+
+/* =========================================================
+   7. CARDS E INDICADORES
+   Card é chapado: borda, sem sombra e sem hover que levanta.
+   ========================================================= */
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-5);
+    margin: var(--space-6) 0 var(--space-10);
+}
+
+.card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-1);
+    border-radius: var(--r-lg);
+    padding: var(--space-6);
+    transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.card:hover {
+    border-color: var(--border-2);
+}
+
+.card h3 {
+    margin-top: 0;
+}
+
+/* INDICADOR — rótulo discreto em cima, número em display embaixo. */
+.indicador {
+    position: relative;
+    overflow: hidden;
+}
+
+.indicador h3 {
+    font-family: var(--font-sans);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    color: var(--fg-3);
+    margin-bottom: var(--space-3);
+}
+
+.indicador span {
+    display: block;
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 48;
+    font-size: var(--fs-32);
+    font-weight: 600;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg-1);
+}
+
+.indicador::after {
+    content: '';
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    background: var(--accent-soft);
+    opacity: 0.55;
+    border-radius: var(--r-full);
+    bottom: -24px;
+    right: -24px;
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   8. VENDA RÁPIDA E BLOCOS DE APOIO
+   ========================================================= */
+
+.venda-box {
+    padding: var(--space-6);
+}
+
+.venda-box h3 {
+    margin-bottom: var(--space-5);
+}
+
+.venda-box button {
+    margin-top: var(--space-3);
+}
+
+.form-group {
+    margin-bottom: var(--space-4);
+}
+
+.info-linha {
+    background: var(--bg-sunken);
+    border: 1px solid var(--border-1);
+    color: var(--fg-2);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--r-sm);
+    margin-bottom: var(--space-4);
+    font-size: var(--fs-14);
+}
+
+.total-box {
+    background: var(--highlight-soft);
+    border: 1px solid var(--highlight);
+    color: var(--fg-1);
+    padding: var(--space-4);
+    border-radius: var(--r-sm);
+    font-size: var(--fs-16);
+    margin-bottom: var(--space-4);
+}
+
+/* Dinheiro em Fraunces com os dígitos alinhados em coluna. */
+.info-linha strong,
+.total-box strong,
+.modal-total strong,
+#conteudoItens h3 {
+    font-family: var(--font-display);
+    font-variation-settings: "opsz" 48;
+    font-weight: 600;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--tracking-tight);
+}
+
+.btn-full {
+    width: 100%;
+    justify-content: center;
+}
+
+
+/* =========================================================
+   9. FORMULÁRIOS
+   ========================================================= */
+
+input,
+select,
+textarea,
+.input {
+    width: 100%;
+    padding: var(--space-3);
+    margin-bottom: var(--space-4);
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border-1);
+    background: var(--bg-surface);
+    color: var(--fg-1);
+    font-family: var(--font-sans);
+    font-size: var(--fs-14);
+    transition:
+        border-color var(--dur-fast) var(--ease-out),
+        box-shadow var(--dur-fast) var(--ease-out);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--fg-4);
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+    border-color: var(--border-2);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--shadow-focus);
+}
+
+input[type="number"] {
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* O ícone do calendário nativo some no escuro sem isto. */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.6);
+}
+
+
+/* =========================================================
+   10. BOTÕES
+   Ação usada o dia inteiro não ganha animação de entrada:
+   só cor no hover e um afundar discreto no clique.
+   ========================================================= */
+
+.btn {
+    padding: 9px var(--space-4);
+    border-radius: var(--r-sm);
+    font-family: var(--font-sans);
+    font-size: var(--fs-13);
+    font-weight: 600;
+    line-height: 1.2;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    transition:
+        background-color var(--dur-fast) var(--ease-out),
+        border-color var(--dur-fast) var(--ease-out),
+        color var(--dur-fast) var(--ease-out),
+        transform var(--dur-fast) var(--ease-out);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn:disabled,
+.btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-sm {
+    padding: 5px var(--space-3);
+    font-size: var(--fs-12);
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.btn-secondary {
+    background: var(--bg-surface);
+    border-color: var(--border-2);
+    color: var(--fg-1);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-sunken);
+    border-color: var(--border-strong);
+}
+
+.btn-danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: var(--on-danger);
+}
+
+.btn-danger:hover {
+    filter: brightness(0.92);
+}
+
+.btn-success {
+    background: var(--success);
+    border-color: var(--success);
+    color: var(--on-success);
+}
+
+.btn-success:hover {
+    filter: brightness(0.92);
+}
+
+
+/* =========================================================
+   11. BADGES
+   ========================================================= */
+
+.badge {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--r-full);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    line-height: 1.3;
+    display: inline-block;
+    letter-spacing: var(--tracking-wide);
+    border: 1px solid transparent;
+}
+
+.badge-ativa {
+    background: var(--success-soft);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.badge-cancelado {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+
+/* =========================================================
+   12. TABELAS
+   Sem sombra: a borda separa. Números com tabular-nums.
+   ========================================================= */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: var(--space-5);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-1);
+    border-radius: var(--r-md);
+    overflow: hidden;
+}
+
+table th,
+table td {
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border-1);
+    text-align: left;
+    font-size: var(--fs-14);
+}
+
+table th {
+    background: var(--bg-sunken);
+    font-family: var(--font-sans);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-caps);
+    color: var(--fg-3);
+}
+
+table td {
+    color: var(--fg-2);
+    font-feature-settings: "tnum" 1, "lnum" 1;
+    font-variant-numeric: tabular-nums;
+}
+
+table tbody tr {
+    background: transparent;
+    transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+table tbody tr:nth-child(even) {
+    background: var(--bg-canvas);
+}
+
+table tbody tr:hover {
+    background: var(--accent-soft);
+}
+
+table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Coluna de ações: botões lado a lado. */
+td:last-child {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   13. PAGINAÇÃO
+   ========================================================= */
+
+.paginacao {
+    margin-top: var(--space-5);
+    display: flex;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+.pag-btn {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--r-sm);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-1);
+    text-decoration: none;
+    color: var(--fg-2);
+    font-size: var(--fs-13);
+    font-weight: 500;
+    transition:
+        background-color var(--dur-fast) var(--ease-out),
+        border-color var(--dur-fast) var(--ease-out),
+        color var(--dur-fast) var(--ease-out);
+}
+
+.pag-btn:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.pag-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+}
+
+.info-paginacao {
+    margin-bottom: var(--space-3);
+    font-size: var(--fs-13);
+    color: var(--fg-3);
+}
+
+
+/* =========================================================
+   14. MODAL · elemento flutuante, mantém sombra
+   ========================================================= */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--scrim);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    overscroll-behavior: contain;
+    animation: fadeIn var(--dur-fast) var(--ease-out) forwards;
+}
+
+.modal-content {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-1);
+    padding: var(--space-8);
+    width: 500px;
+    max-width: calc(100% - var(--space-8));
+    max-height: 85vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-4);
+    transform-origin: center;
+    animation: slideUp var(--dur-med) var(--ease-out);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: var(--space-5);
+    font-size: var(--fs-20);
+}
+
+/* O ajax_venda_itens.php devolve o total como <h3>; a classe .modal-total
+   segue valendo para quem montar o bloco no PHP. Os dois têm a mesma cara. */
+.modal-total,
+#conteudoItens h3 {
+    margin-top: var(--space-5);
+    padding: var(--space-4);
+    background: var(--highlight-soft);
+    border: 1px solid var(--highlight);
+    color: var(--fg-1);
+    border-radius: var(--r-sm);
+    font-size: var(--fs-16);
+    font-weight: 600;
+}
+
+.modal-footer {
+    margin-top: var(--space-5);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Nada surge do nada: entra de 0.96, nunca de scale(0). */
+@keyframes slideUp {
+    from {
+        transform: translateY(12px) scale(0.96);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+
+/* =========================================================
+   15. TOAST · flutuante, mantém sombra
+   ========================================================= */
+
+.toast {
+    position: fixed;
+    top: var(--space-5);
+    right: var(--space-5);
+    z-index: 1000;
+    background: var(--bg-inverse);
+    color: var(--fg-inverse);
+    border: 1px solid transparent;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--r-md);
+    font-size: var(--fs-14);
+    font-weight: 600;
+    box-shadow: var(--shadow-3);
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+    pointer-events: none;
+    transition:
+        opacity var(--dur-med) var(--ease-out),
+        transform var(--dur-med) var(--ease-out);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.toast-success {
+    background: var(--success-soft);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.toast-error {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.toast-warning {
+    background: var(--warning-soft);
+    border-color: var(--warning);
+    color: var(--warning);
+}
+
+
+/* =========================================================
+   16. LOGIN
+   Estava inline no login.php; migrou pra cá pra seguir os tokens.
+   ========================================================= */
+
+body.login-page,
+.login-body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg-canvas);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Marca d'água */
+body.login-page::after {
+    content: "";
+    position: absolute;
+    right: 80px;
+    bottom: 60px;
+    width: 480px;
+    height: 480px;
+    background: url('/assets/img/logo.webp') no-repeat center;
+    background-size: contain;
+    opacity: 0.07;
+    pointer-events: none;
+    z-index: 0;
+}
+
+[data-theme="dark"] body.login-page::after {
+    opacity: 0.1;
+    filter: brightness(0) invert(1);
+}
+
+.login-card {
+    position: relative;
+    z-index: 1;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-1);
+    width: 380px;
+    max-width: calc(100% - var(--space-8));
+    padding: var(--space-10) var(--space-8);
+    border-radius: var(--r-xl);
+    text-align: center;
+}
+
+.login-card img {
+    width: 160px;
+    max-width: 100%;
+    height: auto;
+    margin-bottom: var(--space-6);
+}
+
+[data-theme="dark"] .login-card img {
+    filter: brightness(0) invert(1);
+}
+
+.login-card h2 {
+    margin-bottom: var(--space-6);
+    font-size: var(--fs-24);
+    color: var(--fg-1);
+}
+
+.login-card input {
+    text-align: left;
+}
+
+.login-card .btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: var(--space-2);
+}
+
+.login-erro {
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-5);
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-14);
+    text-align: left;
+}
+
+
+/* =========================================================
+   17. RESPONSIVO
+   ========================================================= */
+
+@media (max-width: 900px) {
+    .sidebar {
+        display: none;
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .content {
+        padding: var(--space-5);
+    }
+
+    h1 {
+        font-size: var(--fs-32);
+    }
+
+    h2 {
+        font-size: var(--fs-24);
+    }
+
+    .cards-grid {
+        gap: var(--space-4);
+    }
+
+    body.login-page::after {
+        right: -60px;
+        bottom: -40px;
+        width: 320px;
+        height: 320px;
+    }
+}
+
+
+/* =========================================================
+   18. MOVIMENTO REDUZIDO
+   Menos e mais suave, não zero: opacidade fica, deslocamento sai.
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .modal,
+    .modal-content {
+        animation-duration: 1ms;
+    }
+
+    .toast,
+    .toast.show {
+        transform: none;
+        transition: opacity var(--dur-fast) var(--ease-out);
+    }
+
+    .btn:active {
+        transform: none;
+    }
+}
