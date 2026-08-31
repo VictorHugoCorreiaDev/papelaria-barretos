@@ -1,5 +1,11 @@
-# Arquivo com senha do banco
+# Arquivo com senha do banco (use o Conexao.exemplo.php como modelo)
 Conexao.php
+
+# Configuração local de ferramentas. Precisa ser .claude/* e não .claude/:
+# ignorando o diretório inteiro o Git nem desce nele, e a exceção abaixo
+# não teria efeito.
+.claude/*
+!.claude/launch.json
 
 # Futuro (caso use)
 .env
