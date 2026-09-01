@@ -53,6 +53,8 @@ Páginas puramente de leitura (`Estoque.php`, `ListarVendas.php`, `Relatorios.ph
 
 Toda página precisa terminar incluindo o `footer.php` — é ele que fecha `.content`, `.main` e `.layout`, emite `</body></html>` e carrega o `funcoes.js`.
 
+`pages/ExportarRelatorio.php` é a exceção: devolve um CSV para download, não HTML, então não inclui header nem footer. Qualquer saída antes dos `header()` de `Content-Type`/`Content-Disposition` corromperia o arquivo baixado. A tela de relatórios chega nele por um `<button formaction>`, e não por link, para que a exportação receba as datas que estão nos campos no momento do clique.
+
 `includes/validacao.php` guarda validações reaproveitáveis entre páginas (hoje, a `dataValida()` usada pelo `Relatorios.php`). São funções globais, então inclua sempre com `require_once`.
 
 `includes/configuracao.php` acerta o fuso horário e precisa vir logo **depois** do `Conexao.php` — ele ajusta a sessão do MySQL, então sem a conexão aberta não tem efeito. Todo ponto de entrada que carrega o `Conexao.php` carrega também esse arquivo; ao criar um novo, mantenha o par.

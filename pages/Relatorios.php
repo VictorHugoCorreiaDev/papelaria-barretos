@@ -18,9 +18,9 @@ $dataFim = dataValida($_GET['fim'] ?? null, date('Y-m-d'));
 /* RESUMO (APENAS VENDAS ATIVAS) */
 
 $sqlResumo = "
-    SELECT 
+    SELECT
         COUNT(*) as total_vendas,
-        SUM(total) as faturamento
+        COALESCE(SUM(total), 0) as faturamento
     FROM vendas
     WHERE status = 'ativa'
     AND DATE(created_at) BETWEEN :inicio AND :fim
@@ -34,8 +34,26 @@ $stmt->execute([
 
 $resumo = $stmt->fetch();
 
-$totalVendas = $resumo['total_vendas'] ?? 0;
-$faturamento = $resumo['faturamento'] ?? 0;
+$totalVendas = (int) ($resumo['total_vendas'] ?? 0);
+$faturamento = (float) ($resumo['faturamento'] ?? 0);
+
+/*
+ * O custo vem dos itens, com o custo_unitario congelado na venda — a
+ * tabela de vendas guarda só o total faturado. Mesmo recorte do resumo
+ * acima, senão lucro e faturamento falariam de conjuntos diferentes.
+ */
+$stmtCusto = $conn->prepare("
+    SELECT COALESCE(SUM(vp.quantidade * vp.custo_unitario), 0)
+    FROM vendas_produtos vp
+    JOIN vendas v ON v.id = vp.venda_id
+    WHERE v.status = 'ativa'
+      AND DATE(v.created_at) BETWEEN :inicio AND :fim
+");
+$stmtCusto->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
+$custo = (float) $stmtCusto->fetchColumn();
+
+$lucro = $faturamento - $custo;
+$margem = $faturamento > 0 ? ($lucro / $faturamento) * 100 : 0;
 $ticketMedio = $totalVendas > 0 ? $faturamento / $totalVendas : 0;
 
 /*PAGINAÇÃO */
@@ -66,11 +84,22 @@ if ($page > $totalPaginas && $totalPaginas > 0) {
 }
 
 /* LISTAGEM PAGINADA */
+/*
+ * A listagem inclui as canceladas de propósito — a coluna Status as
+ * identifica e é útil ver o que foi cancelado no período. Por isso o
+ * contador de registros aqui pode ser maior que o card de vendas, que
+ * conta só as ativas.
+ */
 $sqlLista = "
-    SELECT *
-    FROM vendas
-    WHERE DATE(created_at) BETWEEN :inicio AND :fim
-    ORDER BY created_at DESC
+    SELECT v.*,
+        COALESCE((
+            SELECT SUM(vp.quantidade * vp.custo_unitario)
+            FROM vendas_produtos vp
+            WHERE vp.venda_id = v.id
+        ), 0) AS custo
+    FROM vendas v
+    WHERE DATE(v.created_at) BETWEEN :inicio AND :fim
+    ORDER BY v.created_at DESC
     LIMIT :limit OFFSET :offset
 ";
 
@@ -115,6 +144,18 @@ if ($totalRegistros > 0) {
             </button>
         </div>
 
+        <div>
+            <!--
+              formaction em vez de link: assim a exportação recebe as datas
+              que estão nos campos agora. Um <a> levaria o período do último
+              carregamento, exportando o intervalo errado para quem troca as
+              datas e clica direto em Exportar.
+            -->
+            <button type="submit" formaction="ExportarRelatorio.php" class="btn btn-secondary">
+                ⬇ Exportar CSV
+            </button>
+        </div>
+
     </form>
 </div>
 
@@ -124,19 +165,26 @@ if ($totalRegistros > 0) {
     <div class="card indicador">
         <h3>🛒 Vendas</h3>
         <span><?= $totalVendas ?></span>
+        <small class="comparativo">ticket médio de R$ <?= number_format($ticketMedio, 2, ',', '.') ?></small>
     </div>
 
     <div class="card indicador">
         <h3>💰 Faturamento</h3>
         <span>R$ <?= number_format($faturamento, 2, ',', '.') ?></span>
+        <small class="comparativo">custo de R$ <?= number_format($custo, 2, ',', '.') ?></small>
     </div>
 
     <div class="card indicador">
-        <h3>📈 Ticket Médio</h3>
-        <span>R$ <?= number_format($ticketMedio, 2, ',', '.') ?></span>
+        <h3>📈 Lucro</h3>
+        <span>R$ <?= number_format($lucro, 2, ',', '.') ?></span>
+        <small class="comparativo">margem de <?= number_format($margem, 1, ',', '.') ?>%</small>
     </div>
 
 </div>
+
+<p class="periodo-atual" style="margin-top:15px;">
+    Os indicadores consideram apenas vendas <strong>ativas</strong>; a tabela abaixo lista também as canceladas do período.
+</p>
 
 <!-- TABELA -->
 <div class="card" style="margin-top:25px;">
@@ -157,6 +205,7 @@ if ($totalRegistros > 0) {
             <tr>
                 <th>ID</th>
                 <th>Total</th>
+                <th>Lucro</th>
                 <th>Data</th>
                 <th>Status</th>
             </tr>
@@ -166,16 +215,24 @@ if ($totalRegistros > 0) {
 
             <?php if (empty($vendas)): ?>
                 <tr>
-                    <td colspan="4" style="text-align:center; padding:30px; color: var(--text-gray);">
+                    <td colspan="5" style="text-align:center; padding:30px; color: var(--text-gray);">
                         Nenhuma venda encontrada no período.
                     </td>
                 </tr>
             <?php else: ?>
 
                 <?php foreach ($vendas as $v): ?>
+                    <?php $lucroVenda = $v['total'] - $v['custo']; ?>
                     <tr>
                         <td><?= (int) $v['id'] ?></td>
                         <td>R$ <?= number_format($v['total'], 2, ',', '.') ?></td>
+                        <td>
+                            <?php if ($v['status'] === 'ativa'): ?>
+                                R$ <?= number_format($lucroVenda, 2, ',', '.') ?>
+                            <?php else: ?>
+                                <span style="color: var(--text-gray);">—</span>
+                            <?php endif; ?>
+                        </td>
                         <td><?= date('d/m/Y H:i', strtotime($v['created_at'])) ?></td>
                         <td>
                             <?php if ($v['status'] === 'ativa'): ?>
