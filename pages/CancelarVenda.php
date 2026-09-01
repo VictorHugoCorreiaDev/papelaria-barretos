@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../Conexao.php';
+require_once __DIR__ . '/../includes/configuracao.php';
 
 $vendaId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 

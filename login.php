@@ -1,6 +1,7 @@
 <?php
 session_start();
 require 'Conexao.php';
+require_once __DIR__ . '/includes/configuracao.php';
 
 // Já autenticado: não faz sentido mostrar o formulário de novo
 if (isset($_SESSION['usuario'])) {

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../Conexao.php';
+require_once __DIR__ . '/../includes/configuracao.php';
 
 // Todos os blocos que alteram estado abaixo terminam em
 // header("Location: ...") — por isso o header.php só é incluído no fim,

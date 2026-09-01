@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../Conexao.php';
+require_once __DIR__ . '/../includes/configuracao.php';
 require_once __DIR__ . '/../includes/header.php';
 
 /*FILTRO DE STATUS */

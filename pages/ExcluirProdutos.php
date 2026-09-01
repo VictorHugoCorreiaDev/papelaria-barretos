@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../Conexao.php';
+require_once __DIR__ . '/../includes/configuracao.php';
 
 if (!isset($_GET['id'])) {
     header("Location: Estoque.php");

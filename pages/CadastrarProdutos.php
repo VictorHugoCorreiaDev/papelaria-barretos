@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../Conexao.php';
+require_once __DIR__ . '/../includes/configuracao.php';
 
 // O tratamento do POST precisa vir antes do header.php: ele termina em
 // header("Location: ...") e nenhuma saída pode ter sido impressa ainda.

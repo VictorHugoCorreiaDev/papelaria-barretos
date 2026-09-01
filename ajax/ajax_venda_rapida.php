@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_ajax.php';
 require_once __DIR__ . '/../Conexao.php';
+require_once __DIR__ . '/../includes/configuracao.php';
 
 header('Content-Type: application/json');
 
