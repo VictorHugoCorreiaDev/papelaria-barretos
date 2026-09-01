@@ -91,6 +91,7 @@ CREATE TABLE produtos (
   id INT NOT NULL AUTO_INCREMENT,
   nome VARCHAR(255) NOT NULL,
   preco DECIMAL(10,2) NOT NULL,
+  custo DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   quantidade INT NOT NULL,
   created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
@@ -110,6 +111,7 @@ CREATE TABLE vendas_produtos (
   produto_id INT DEFAULT NULL,
   quantidade INT DEFAULT NULL,
   preco_unitario DECIMAL(10,2) DEFAULT NULL,
+  custo_unitario DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (id),
   KEY (venda_id),
   KEY (produto_id),
@@ -121,7 +123,8 @@ CREATE TABLE vendas_produtos (
 Detalhes que valem conhecer:
 
 - `vendas.status` guarda `'ativa'` ou `'cancelada'`. Vendas **nunca são excluídas**, apenas marcadas como canceladas — o histórico é preservado.
-- `vendas_produtos.preco_unitario` congela o preço no momento da venda, de modo que alterar o preço de um produto não altera totais de vendas antigas.
+- `vendas_produtos.preco_unitario` e `custo_unitario` congelam preço e custo no momento da venda, de modo que alterar preço ou custo de um produto não altera totais nem lucros de vendas antigas.
+- `produtos.custo` é o preço de compra. É o que permite ao dashboard calcular lucro e margem; produtos sem custo preenchido aparecem como lucro igual ao faturamento.
 - As chaves estrangeiras não têm `ON DELETE CASCADE` de propósito: um produto que já foi vendido não pode ser excluído, e a tela de estoque avisa quando isso acontece.
 
 ### 2️⃣ Crie o arquivo de conexão

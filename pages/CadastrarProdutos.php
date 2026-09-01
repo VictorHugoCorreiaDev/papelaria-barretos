@@ -10,11 +10,12 @@ if ($_POST) {
 
     $nome = $_POST['nome'];
     $preco = $_POST['preco'];
+    $custo = $_POST['custo'] ?? 0;
     $quantidade = $_POST['quantidade'];
 
-    $sql = "INSERT INTO produtos (nome, preco, quantidade) VALUES (?, ?, ?)";
+    $sql = "INSERT INTO produtos (nome, preco, custo, quantidade) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->execute([$nome, $preco, $quantidade]);
+    $stmt->execute([$nome, $preco, $custo, $quantidade]);
 
     $_SESSION['toast'] = [
         "type" => "success",
@@ -40,13 +41,21 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
 
         <div class="form-group">
-            <label>Preço</label>
-            <input type="number" step="0.01" name="preco" required>
+            <label>Preço de venda</label>
+            <input type="number" step="0.01" min="0" name="preco" required>
+        </div>
+
+        <div class="form-group">
+            <label>Custo de compra</label>
+            <input type="number" step="0.01" min="0" name="custo" value="0.00" required>
+            <small style="color: var(--text-gray);">
+                Quanto você paga pelo produto. É o que permite calcular o lucro.
+            </small>
         </div>
 
         <div class="form-group">
             <label>Quantidade</label>
-            <input type="number" name="quantidade" required>
+            <input type="number" min="0" name="quantidade" required>
         </div>
 
         <button type="submit" class="btn btn-success">

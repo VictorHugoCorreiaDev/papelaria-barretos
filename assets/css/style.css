@@ -529,7 +529,7 @@ hr {
     margin-bottom: var(--space-3);
 }
 
-.indicador span {
+.indicador > span {
     display: block;
     font-family: var(--font-display);
     font-variation-settings: "opsz" 48;
@@ -1170,4 +1170,37 @@ body.login-page::after {
     .btn:active {
         transform: none;
     }
+}
+
+/* PERÍODO E COMPARATIVO DO DASHBOARD */
+
+.periodo-atual {
+    color: var(--text-gray);
+    font-size: 15px;
+    margin: 0 0 14px 0;
+}
+
+.indicador .comparativo {
+    display: block;
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--text-gray);
+    font-weight: 500;
+}
+
+/* dentro do comparativo o número volta ao tamanho do texto corrido */
+.indicador .comparativo span {
+    display: inline;
+    font-size: inherit;
+    font-weight: 600;
+    letter-spacing: normal;
+}
+
+.indicador .comparativo.positivo {
+    color: var(--success);
+}
+
+.indicador .comparativo.negativo {
+    color: var(--danger);
 }

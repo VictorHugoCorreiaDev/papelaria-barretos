@@ -27,6 +27,7 @@ if (isset($_POST['adicionar'])) {
             'produto_id' => $produto['id'],
             'nome' => $produto['nome'],
             'preco' => $produto['preco'],
+            'custo' => $produto['custo'],
             'quantidade' => $quantidade
         ];
 
@@ -94,14 +95,16 @@ if (isset($_POST['finalizar'])) {
             // Registrar itens
             foreach ($_SESSION['carrinho'] as $item) {
 
-                $conn->prepare("INSERT INTO vendas_produtos 
-                    (venda_id, produto_id, quantidade, preco_unitario)
-                    VALUES (?, ?, ?, ?)")
+                $conn->prepare("INSERT INTO vendas_produtos
+                    (venda_id, produto_id, quantidade, preco_unitario, custo_unitario)
+                    VALUES (?, ?, ?, ?, ?)")
                     ->execute([
                         $venda_id,
                         $item['produto_id'],
                         $item['quantidade'],
-                        $item['preco']
+                        $item['preco'],
+                        // Carrinhos abertos antes desta mudança não têm custo
+                        $item['custo'] ?? 0
                     ]);
 
                 $conn->prepare("UPDATE produtos 

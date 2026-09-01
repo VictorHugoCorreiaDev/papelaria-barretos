@@ -35,6 +35,8 @@ function atualizarValores() {
         botao.disabled = quantidade <= 0 || quantidade > estoque;
 }
 
+// Reescreve os indicadores do dashboard depois de uma venda rápida.
+// Os ids e o formato precisam bater com o que o dashboard.php renderiza.
 function atualizarCards(cards) {
 
     if (!cards) return;
@@ -44,22 +46,18 @@ function atualizarCards(cards) {
         currency: 'BRL'
     });
 
-    const vendasCard = document.getElementById('cardVendas');
-    const receitaTotalCard = document.getElementById('cardReceitaTotal');
-    const receitaHojeCard = document.getElementById('cardReceitaHoje');
-    const ticketMedioCard = document.getElementById('cardTicketMedio');
+    const escreve = (id, valor) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = valor;
+    };
 
-    if (vendasCard)
-        vendasCard.textContent = cards.vendas;
-
-    if (receitaTotalCard)
-        receitaTotalCard.textContent = formatoBRL.format(cards.receitaTotal);
-
-    if (receitaHojeCard)
-        receitaHojeCard.textContent = formatoBRL.format(cards.receitaHoje);
-
-    if (ticketMedioCard)
-        ticketMedioCard.textContent = formatoBRL.format(cards.ticketMedio);
+    escreve('cardVendasMes', cards.vendasMes);
+    escreve('cardFaturamentoMes', formatoBRL.format(cards.faturamentoMes));
+    escreve('cardLucroMes', formatoBRL.format(cards.lucroMes));
+    escreve('cardMargemMes', cards.margemMes.toFixed(1).replace('.', ','));
+    escreve('cardTicketMedioMes', formatoBRL.format(cards.ticketMedioMes).replace('R$', '').trim());
+    escreve('cardReceitaHoje', formatoBRL.format(cards.receitaHoje));
+    escreve('cardVendasHoje', cards.vendasHoje);
 }
 
 produtoSelect?.addEventListener('change', atualizarValores);

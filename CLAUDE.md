@@ -27,9 +27,9 @@ Não há linter, executor de testes nem gerenciador de dependências. A verifica
 Não há arquivo `.sql` de schema, mas o `README.md` traz o DDL das quatro tabelas. As tabelas que o código pressupõe:
 
 - `usuarios(usuario, senha)` — `senha` é um hash bcrypt de `password_hash()`, verificado em `login.php`. Não existe tela de cadastro; usuários precisam ser inseridos manualmente.
-- `produtos(id, nome, preco, quantidade, created_at)` — `quantidade` é o estoque corrente; `created_at` existe na tabela mas nenhuma tela usa.
+- `produtos(id, nome, preco, custo, quantidade, created_at)` — `quantidade` é o estoque corrente; `custo` é o preço de compra, usado para o lucro no dashboard; `created_at` existe na tabela mas nenhuma tela usa.
 - `vendas(id, total, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas.
-- `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario)` — `preco_unitario` congela o preço no momento da venda, de modo que totais históricos sobrevivem a alterações de preço.
+- `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario, custo_unitario)` — congelam preço e custo no momento da venda, de modo que totais e lucros históricos sobrevivem a alterações de preço ou de custo.
 
 ## Estrutura das páginas
 
@@ -54,6 +54,8 @@ Páginas puramente de leitura (`Estoque.php`, `ListarVendas.php`, `Relatorios.ph
 Toda página precisa terminar incluindo o `footer.php` — é ele que fecha `.content`, `.main` e `.layout`, emite `</body></html>` e carrega o `funcoes.js`.
 
 `includes/validacao.php` guarda validações reaproveitáveis entre páginas (hoje, a `dataValida()` usada pelo `Relatorios.php`). São funções globais, então inclua sempre com `require_once`.
+
+`includes/configuracao.php` acerta o fuso horário e precisa vir logo **depois** do `Conexao.php` — ele ajusta a sessão do MySQL, então sem a conexão aberta não tem efeito. Todo ponto de entrada que carrega o `Conexao.php` carrega também esse arquivo; ao criar um novo, mantenha o par.
 
 `auth.php` e `header.php` iniciam a sessão com a guarda `session_status() === PHP_SESSION_NONE`, então podem ser incluídos em qualquer ordem sem gerar aviso de sessão já ativa. O `header.php` também consome e limpa o `$_SESSION['toast']`. Páginas novas não precisam chamar `session_start()`.
 
@@ -88,11 +90,17 @@ O estoque é alterado em três lugares, todos dentro de `beginTransaction()`/`co
 
 ## Indicadores do dashboard
 
-Os quatro cards são renderizados pelo `dashboard.php` e reescritos pelo `atualizarCards()` do `funcoes.js` depois de cada venda rápida. Três coisas precisam continuar alinhadas:
+Os cards mostram o **mês corrente**, não o acumulado histórico: vendas no mês, faturamento, lucro (com margem), hoje e o ticket médio do mês. São renderizados pelo `dashboard.php` e reescritos pelo `atualizarCards()` do `funcoes.js` depois de cada venda rápida. Três coisas precisam continuar alinhadas:
 
-- Os `<span>` carregam os ids `cardVendas`, `cardReceitaTotal`, `cardReceitaHoje` e `cardTicketMedio` — é por eles que o JS acha os elementos.
+- Os `<span>` carregam os ids `cardVendasMes`, `cardFaturamentoMes`, `cardLucroMes`, `cardMargemMes`, `cardTicketMedioMes`, `cardReceitaHoje` e `cardVendasHoje` — é por eles que o JS acha os elementos.
 - Os valores monetários já saem do servidor com `R$`, porque o JS os reescreve com `Intl.NumberFormat`, que também traz o símbolo. Sem isso o card mudaria de formato entre o carregamento e a atualização.
-- O `ajax_venda_rapida.php` recalcula os indicadores com o mesmo `status = 'ativa'` que o `dashboard.php` usa. Divergir aí faz vendas canceladas entrarem só na versão atualizada por AJAX.
+- O `ajax_venda_rapida.php` repete as **mesmas consultas** do `dashboard.php` — mesmo recorte de mês e o mesmo `status = 'ativa'`. Divergir aí faz o card mostrar um número depois da venda rápida e outro ao recarregar.
+
+O lucro vem de `SUM(quantidade * custo_unitario)` na `vendas_produtos`, não de um campo em `vendas` — a tabela de vendas guarda só o total faturado. Produto cadastrado sem custo entra como custo zero, o que infla o lucro; por isso o campo é obrigatório no formulário.
+
+## Migrações
+
+`migracoes/` guarda os `.sql` de alteração de schema, numerados na ordem de aplicação. Não há ferramenta de migração: rode o arquivo à mão em cada ambiente. **Aplique em produção antes de publicar o código que usa as colunas novas** — o deploy é automático no push, e código novo contra schema antigo derruba o site.
 
 ## Carregamento do JavaScript
 
@@ -111,6 +119,14 @@ A regra em vigor, aplicada em todas as telas:
 `ajax_venda_itens.php` monta HTML por concatenação de strings e o resultado entra via `innerHTML` no modal, então o nome do produto é escapado antes da interpolação.
 
 No `Relatorios.php`, `inicio` e `fim` vêm da query string e reaparecem nos inputs e nos links de paginação. Em vez de só escapar, a função `dataValida()` rejeita o que não for uma data `Y-m-d` real e cai para a data de hoje — o escape na saída fica como defesa em profundidade.
+
+## Fuso horário
+
+A hospedagem roda o PHP em `America/New_York` e o MySQL no fuso do Pacífico. O `includes/configuracao.php` corrige os dois: `date_default_timezone_set('America/Sao_Paulo')` no PHP e `SET time_zone = '-03:00'` na sessão do MySQL.
+
+O offset é fixo em vez do nome `America/Sao_Paulo` porque os nomes dependem das tabelas de fuso do MySQL, normalmente vazias em hospedagem compartilhada — ali o `SET` falharia sem avisar. O Brasil não adota horário de verão desde 2019.
+
+`created_at` é `TIMESTAMP`, e não `DATETIME`: o MySQL guarda o valor internamente em UTC e converte para o fuso da sessão na leitura e na gravação. Por isso o instante registrado sempre esteve certo mesmo antes da correção — o que saía errado era só a exibição. Consequência prática: **nunca "conserte" horários com `UPDATE` somando horas**; ajuste o fuso da sessão e todos os registros passam a aparecer certos sozinhos.
 
 ## Estilos
 

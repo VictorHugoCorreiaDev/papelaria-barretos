@@ -11,10 +11,11 @@ $id = (int) ($_GET['id'] ?? 0);
 if ($_POST) {
     $nome = $_POST['nome'];
     $preco = $_POST['preco'];
+    $custo = $_POST['custo'] ?? 0;
     $quantidade = $_POST['quantidade'];
 
-    $stmt = $conn->prepare("UPDATE produtos SET nome=?, preco=?, quantidade=? WHERE id=?");
-    $stmt->execute([$nome, $preco, $quantidade, $id]);
+    $stmt = $conn->prepare("UPDATE produtos SET nome=?, preco=?, custo=?, quantidade=? WHERE id=?");
+    $stmt->execute([$nome, $preco, $custo, $quantidade, $id]);
 
     $_SESSION['toast'] = [
         'type' => 'success',
@@ -51,8 +52,11 @@ require_once __DIR__ . '/../includes/header.php';
         <label>Nome</label><br>
         <input type="text" name="nome" value="<?= htmlspecialchars($produto['nome']) ?>"><br>
 
-        <label>Preço</label><br>
-        <input type="number" step="0.01" name="preco" value="<?= htmlspecialchars($produto['preco']) ?>"><br>
+        <label>Preço de venda</label><br>
+        <input type="number" step="0.01" min="0" name="preco" value="<?= htmlspecialchars($produto['preco']) ?>"><br>
+
+        <label>Custo de compra</label><br>
+        <input type="number" step="0.01" min="0" name="custo" value="<?= htmlspecialchars($produto['custo']) ?>"><br>
 
         <label>Quantidade</label><br>
         <input type="number" name="quantidade" value="<?= (int) $produto['quantidade'] ?>"><br><br>

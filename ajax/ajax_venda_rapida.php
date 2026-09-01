@@ -35,10 +35,10 @@ try {
     $venda_id = $conn->lastInsertId();
 
     // Registrar item da venda
-    $conn->prepare("INSERT INTO vendas_produtos 
-        (venda_id, produto_id, quantidade, preco_unitario)
-        VALUES (?, ?, ?, ?)")
-    ->execute([$venda_id, $produto_id, $quantidade, $produto['preco']]);
+    $conn->prepare("INSERT INTO vendas_produtos
+        (venda_id, produto_id, quantidade, preco_unitario, custo_unitario)
+        VALUES (?, ?, ?, ?, ?)")
+    ->execute([$venda_id, $produto_id, $quantidade, $produto['preco'], $produto['custo']]);
 
     // Atualizar estoque
     $conn->prepare("UPDATE produtos 
@@ -59,42 +59,55 @@ try {
     // Buscar métricas atualizadas
     // ==============================
 
-    // O filtro status = 'ativa' tem que ser o mesmo do dashboard.php. Sem ele
-    // as vendas canceladas entravam na conta e o card atualizado por AJAX
-    // ficava maior que o número que a página mostra ao recarregar.
+    /*
+     * Estas consultas precisam ser as MESMAS do dashboard.php — mesmo
+     * recorte de mês e mesmo filtro status = 'ativa'. Divergir aqui faz o
+     * card mostrar um número depois da venda rápida e outro ao recarregar
+     * a página.
+     */
 
-    $totalVendas = $conn->query("
-        SELECT COUNT(*)
+    $mes = $conn->query("
+        SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
         FROM vendas
         WHERE status = 'ativa'
+          AND YEAR(created_at) = YEAR(CURDATE())
+          AND MONTH(created_at) = MONTH(CURDATE())
+    ")->fetch(PDO::FETCH_ASSOC);
+
+    $vendasMes = (int) $mes['vendas'];
+    $faturamentoMes = (float) $mes['faturamento'];
+
+    $custoMes = (float) $conn->query("
+        SELECT COALESCE(SUM(vp.quantidade * vp.custo_unitario), 0)
+        FROM vendas_produtos vp
+        JOIN vendas v ON v.id = vp.venda_id
+        WHERE v.status = 'ativa'
+          AND YEAR(v.created_at) = YEAR(CURDATE())
+          AND MONTH(v.created_at) = MONTH(CURDATE())
     ")->fetchColumn();
 
-    $receitaTotal = $conn->query("
-        SELECT IFNULL(SUM(total),0)
+    $lucroMes = $faturamentoMes - $custoMes;
+    $margemMes = $faturamentoMes > 0 ? ($lucroMes / $faturamentoMes) * 100 : 0;
+    $ticketMedioMes = $vendasMes > 0 ? $faturamentoMes / $vendasMes : 0;
+
+    $hoje = $conn->query("
+        SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
         FROM vendas
-        WHERE status = 'ativa'
-    ")->fetchColumn();
-
-    $receitaHoje = $conn->query("
-        SELECT IFNULL(SUM(total),0)
-        FROM vendas
-        WHERE status = 'ativa'
-        AND DATE(created_at) = CURDATE()
-    ")->fetchColumn();
-
-    $ticketMedio = $totalVendas > 0
-        ? $receitaTotal / $totalVendas
-        : 0;
+        WHERE status = 'ativa' AND DATE(created_at) = CURDATE()
+    ")->fetch(PDO::FETCH_ASSOC);
 
     echo json_encode([
         'status' => 'sucesso',
         'mensagem' => 'Venda registrada com sucesso!',
         'novoEstoque' => $novoEstoque,
         'cards' => [
-            'vendas' => (int)$totalVendas,
-            'receitaTotal' => (float)$receitaTotal,
-            'receitaHoje' => (float)$receitaHoje,
-            'ticketMedio' => (float)$ticketMedio
+            'vendasMes' => $vendasMes,
+            'faturamentoMes' => $faturamentoMes,
+            'lucroMes' => $lucroMes,
+            'margemMes' => $margemMes,
+            'ticketMedioMes' => $ticketMedioMes,
+            'vendasHoje' => (int) $hoje['vendas'],
+            'receitaHoje' => (float) $hoje['faturamento']
         ]
     ]);
 
