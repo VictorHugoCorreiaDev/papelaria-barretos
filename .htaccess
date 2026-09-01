@@ -1,0 +1,24 @@
+# Força HTTPS.
+#
+# A InfinityFree serve o site atrás de um proxy: o Apache recebe a
+# requisição já em HTTP interno, então %{HTTPS} aparece como "off" mesmo
+# quando o visitante veio por HTTPS. Usar essa variável aqui causaria um
+# loop infinito de redirecionamento. O protocolo real chega no cabeçalho
+# X-Forwarded-Proto.
+RewriteEngine On
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Impede que o servidor liste o conteúdo de diretórios sem index
+Options -Indexes
+
+# Bloqueia o acesso direto a arquivos que não devem ser servidos.
+# O Conexao.php é incluído pelo PHP e nunca precisa ser aberto pela URL;
+# os .md são documentação do repositório.
+<FilesMatch "^(Conexao\.php|Conexao\.exemplo\.php)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "\.md$">
+    Require all denied
+</FilesMatch>
