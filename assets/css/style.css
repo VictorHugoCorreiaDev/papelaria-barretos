@@ -1204,3 +1204,119 @@ body.login-page::after {
 .indicador .comparativo.negativo {
     color: var(--danger);
 }
+
+/* CABEÇALHO COM AÇÃO (dashboard) */
+
+.titulo-com-acao {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.titulo-com-acao h2 {
+    margin-bottom: 4px;
+}
+
+/* GRÁFICO DE FATURAMENTO */
+
+.grafico-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.grafico-topo h3 {
+    margin: 0;
+}
+
+.grafico-periodos {
+    display: flex;
+    gap: 6px;
+}
+
+.grafico-total {
+    font-family: var(--font-display);
+    font-size: var(--fs-32);
+    font-weight: 600;
+    margin: 0 0 10px 0;
+}
+
+.grafico {
+    width: 100%;
+    height: 180px;
+    overflow: visible;
+}
+
+.grafico-datas {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-gray);
+    margin-top: 4px;
+}
+
+/* PAINEL DUPLO: ruptura de estoque e últimas vendas */
+
+.painel-duplo {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.lista-painel {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lista-painel li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.lista-painel li:last-child {
+    border-bottom: none;
+}
+
+.lista-nome {
+    flex: 1;
+    min-width: 0;
+    font-weight: 500;
+}
+
+.lista-nome small {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--text-gray);
+    margin-top: 2px;
+}
+
+.lista-hora {
+    font-size: 13px;
+    color: var(--text-gray);
+    font-variant-numeric: tabular-nums;
+}
+
+.lista-valor {
+    white-space: nowrap;
+}
+
+.ver-todas {
+    font-size: 13px;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.ver-todas:hover {
+    text-decoration: underline;
+}

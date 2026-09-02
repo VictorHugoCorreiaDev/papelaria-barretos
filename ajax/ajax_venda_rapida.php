@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth_ajax.php';
+require_once __DIR__ . '/../includes/pagamento.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 
@@ -29,8 +30,11 @@ $conn->beginTransaction();
 try {
 
     // Criar venda
-    $conn->prepare("INSERT INTO vendas (total) VALUES (?)")
-         ->execute([$total]);
+    $cliente = trim($_POST['cliente'] ?? '');
+    $formaPagamento = formaPagamentoValida($_POST['forma_pagamento'] ?? '');
+
+    $conn->prepare("INSERT INTO vendas (total, cliente, forma_pagamento) VALUES (?, ?, ?)")
+         ->execute([$total, $cliente, $formaPagamento]);
 
     $venda_id = $conn->lastInsertId();
 

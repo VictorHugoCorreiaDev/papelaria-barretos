@@ -109,6 +109,14 @@ form?.addEventListener('submit', function (e) {
                 form.reset();
                 atualizarValores();
 
+                // No dashboard o formulário vive num modal: fecha depois de
+                // registrar e recarrega para o gráfico e as listas
+                // acompanharem a venda que acabou de entrar
+                if (document.getElementById('modalVendaRapida')) {
+                    fecharVendaRapida();
+                    setTimeout(() => window.location.reload(), 1200);
+                }
+
             } else {
                 mostrarToast("🔴 " + data.mensagem);
             }
@@ -164,3 +172,28 @@ function sessaoExpirada() {
 function fecharModal() {
     document.getElementById("modalItens").style.display = "none";
 }
+
+// ===== Venda rápida em modal (dashboard) =====
+
+function abrirVendaRapida() {
+    const modal = document.getElementById('modalVendaRapida');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+
+    // Foco no campo de quantidade: o produto já vem selecionado
+    document.getElementById('quantidade')?.focus();
+}
+
+function fecharVendaRapida() {
+    const modal = document.getElementById('modalVendaRapida');
+    if (modal) modal.style.display = 'none';
+}
+
+// Esc fecha os modais abertos
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+
+    fecharVendaRapida();
+    if (document.getElementById('modalItens')) fecharModal();
+});

@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/pagamento.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 
@@ -87,8 +88,11 @@ if (isset($_POST['finalizar'])) {
             }
 
             // Criar venda
-            $stmt = $conn->prepare("INSERT INTO vendas (total) VALUES (?)");
-            $stmt->execute([$totalVenda]);
+            $cliente = trim($_POST['cliente'] ?? '');
+            $formaPagamento = formaPagamentoValida($_POST['forma_pagamento'] ?? '');
+
+            $stmt = $conn->prepare("INSERT INTO vendas (total, cliente, forma_pagamento) VALUES (?, ?, ?)");
+            $stmt->execute([$totalVenda, $cliente, $formaPagamento]);
 
             $venda_id = $conn->lastInsertId();
 
@@ -224,7 +228,23 @@ require_once __DIR__ . '/../includes/header.php';
             Total: <strong>R$ <?= number_format($total, 2, ',', '.') ?></strong>
         </div>
 
-        <form method="POST">
+        <form method="POST" class="form-finalizar">
+
+            <div class="form-group">
+                <label>Cliente <small style="color: var(--text-gray);">(opcional)</small></label>
+                <input type="text" name="cliente" maxlength="120" placeholder="Cliente avulso">
+            </div>
+
+            <div class="form-group">
+                <label>Forma de pagamento</label>
+                <select name="forma_pagamento">
+                    <option value="">Não informada</option>
+                    <?php foreach (formasPagamento() as $chave => $rotulo): ?>
+                        <option value="<?= htmlspecialchars($chave) ?>"><?= htmlspecialchars($rotulo) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
             <button type="submit" name="finalizar" class="btn btn-success">
                 Finalizar Venda
             </button>
