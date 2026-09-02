@@ -39,7 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Login - Papelaria Barretos</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <?php
+    // O login não passa pelo header.php, então repete aqui o parâmetro de
+    // versão — sem ele o cache de trinta dias da hospedagem seguraria a
+    // folha antiga nesta tela
+    $versaoCss = @filemtime(__DIR__ . '/assets/css/style.css') ?: '1';
+    ?>
+    <link rel="stylesheet" href="/assets/css/style.css?v=<?= $versaoCss ?>">
 </head>
 
 <body class="login-page">
