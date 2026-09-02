@@ -72,6 +72,35 @@ $meses = ['', 'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
 $nomeMes = $meses[(int) date('n')] . ' de ' . date('Y');
 
 /*
+ * CABEÇALHO
+ *
+ * Data por extenso montada à mão: strftime, que faria isso pelo locale,
+ * está depreciado desde o PHP 8.1, e o locale pt_BR costuma não existir em
+ * hospedagem compartilhada.
+ */
+$diasSemana = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira',
+               'quinta-feira', 'sexta-feira', 'sábado'];
+$mesesAbrev = ['', 'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
+               'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+$dataExtenso = $diasSemana[(int) date('w')] . ', ' . date('d')
+    . ' de ' . $mesesAbrev[(int) date('n')] . '. · ' . date('H:i');
+
+$horaAtual = (int) date('G');
+$saudacao = $horaAtual < 12 ? 'Bom dia' : ($horaAtual < 18 ? 'Boa tarde' : 'Boa noite');
+
+// O sistema só guarda o usuário de login; na falta de um nome próprio,
+// ele mesmo vira a saudação
+$nomeUsuario = ucfirst($_SESSION['usuario'] ?? '');
+
+if ($vendasHoje === 0) {
+    $resumoDoDia = 'Nenhuma venda registrada hoje ainda.';
+} else {
+    $resumoDoDia = $vendasHoje . ($vendasHoje === 1 ? ' venda' : ' vendas')
+        . ' hoje · R$ ' . number_format($receitaHoje, 2, ',', '.') . ' faturados.';
+}
+
+/*
  * GRÁFICO DE FATURAMENTO
  *
  * O período vem da query string e só aceita os valores dos botões — vira
@@ -144,16 +173,26 @@ $ultimasVendas = $conn->query("
 ?>
 
 <!-- Linha Cards -->
-<div class="titulo-com-acao">
+<div class="titulo-com-acao saudacao">
     <div>
-        <h2>Dashboard</h2>
-        <p class="periodo-atual">Indicadores de <strong><?= $nomeMes ?></strong></p>
+        <p class="saudacao-data"><?= htmlspecialchars($dataExtenso) ?></p>
+        <h2><?= htmlspecialchars($saudacao) ?>, <?= htmlspecialchars($nomeUsuario) ?>.</h2>
+        <p class="saudacao-resumo"><?= htmlspecialchars($resumoDoDia) ?></p>
     </div>
 
-    <button type="button" class="btn btn-primary" onclick="abrirVendaRapida()">
-        🛒 Nova venda
-    </button>
+    <div class="saudacao-acoes">
+        <button type="button" class="btn btn-primary" onclick="abrirVendaRapida()">
+            🛒 Nova venda
+        </button>
+
+        <!-- Recarrega mantendo o período escolhido no gráfico -->
+        <a href="?periodo=<?= $periodo ?>" class="btn btn-secondary">
+            ⟳ Atualizar
+        </a>
+    </div>
 </div>
+
+<p class="periodo-atual">Indicadores de <strong><?= $nomeMes ?></strong></p>
 
 <div class="cards-grid">
 

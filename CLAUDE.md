@@ -104,6 +104,12 @@ O lucro vem de `SUM(quantidade * custo_unitario)` na `vendas_produtos`, não de 
 
 `migracoes/` guarda os `.sql` de alteração de schema, numerados na ordem de aplicação. Não há ferramenta de migração: rode o arquivo à mão em cada ambiente. **Aplique em produção antes de publicar o código que usa as colunas novas** — o deploy é automático no push, e código novo contra schema antigo derruba o site.
 
+## Cache dos arquivos estáticos
+
+A hospedagem responde CSS e JS com `Cache-Control: max-age=2592000` — trinta dias. Por isso o `header.php` e o `footer.php` acrescentam `?v=<filemtime>` às tags: sem esse parâmetro, uma alteração de estilo ou script só chega ao navegador depois do prazo ou de um Ctrl+Shift+R, e a página nova aparece com a folha antiga (layout quebrado, funções JS ausentes).
+
+**Não remova o parâmetro de versão.** E, ao investigar um "não atualizou em produção", verifique o que o navegador está usando, não só o arquivo no servidor: o arquivo publicado pode estar correto enquanto o navegador exibe a versão guardada.
+
 ## Carregamento do JavaScript
 
 O `footer.php` é o único lugar que carrega o `funcoes.js`, e toda página o inclui ao final. Não acrescente uma tag `<script>` própria: o arquivo registra o listener de submit do `#formVenda` no escopo global, então um segundo carregamento faria a venda rápida ser enviada duas vezes.

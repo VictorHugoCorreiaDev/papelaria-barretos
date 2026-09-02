@@ -1320,3 +1320,37 @@ body.login-page::after {
 .ver-todas:hover {
     text-decoration: underline;
 }
+
+/* SAUDAÇÃO DO DASHBOARD */
+
+.saudacao {
+    padding-bottom: 20px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+}
+
+.saudacao h2 {
+    margin: 0 0 4px 0;
+}
+
+.saudacao-data {
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+.saudacao-resumo {
+    margin: 0;
+    color: var(--text-gray);
+    font-size: 15px;
+}
+
+.saudacao-acoes {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
