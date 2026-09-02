@@ -10,7 +10,19 @@ if (session_status() === PHP_SESSION_NONE) {
     <meta charset="UTF-8">
     <title>Bazar e Papelaria Barretos</title>
 
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <?php
+    /*
+     * A hospedagem manda o navegador guardar CSS e JS por 30 dias
+     * (Cache-Control: max-age=2592000). Sem o parâmetro de versão abaixo,
+     * uma alteração de estilo só chegaria ao usuário depois desse prazo ou
+     * de um Ctrl+Shift+R — a página nova aparecia com a folha antiga.
+     *
+     * O filemtime muda a cada publicação do arquivo, o que muda a URL e
+     * força o download da versão nova.
+     */
+    $versaoCss = @filemtime(__DIR__ . '/../assets/css/style.css') ?: '1';
+    ?>
+    <link rel="stylesheet" href="/assets/css/style.css?v=<?= $versaoCss ?>">
     <script>
         const BASE_URL = "";
     </script>
