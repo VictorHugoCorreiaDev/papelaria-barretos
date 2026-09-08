@@ -1354,3 +1354,155 @@ body.login-page::after {
     gap: 10px;
     flex-wrap: wrap;
 }
+
+/* LISTA DE VENDAS AGRUPADA POR DIA */
+
+.filtros-vendas {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.dia-vendas {
+    margin-bottom: 25px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.dia-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding: 18px 0 14px 0;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.dia-titulo {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dark);
+}
+
+.dia-resumo {
+    font-size: 13px;
+    color: var(--text-gray);
+}
+
+.dia-lucro {
+    color: var(--success);
+}
+
+.lista-vendas {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lista-vendas li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.lista-vendas li:last-child {
+    border-bottom: none;
+}
+
+/* Cancelada fica esmaecida: continua visível, mas não compete com as ativas */
+.lista-vendas li.venda-cancelada {
+    opacity: 0.6;
+}
+
+.venda-hora {
+    font-size: 13px;
+    color: var(--text-gray);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.venda-codigo {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--text-gray);
+    white-space: nowrap;
+}
+
+.venda-cliente {
+    font-weight: 500;
+    min-width: 140px;
+    flex: 1;
+}
+
+.venda-pagamento {
+    font-size: 13px;
+    color: var(--text-gray);
+    white-space: nowrap;
+    min-width: 90px;
+}
+
+.venda-itens {
+    flex: 1.4;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--text-gray);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.venda-situacao {
+    white-space: nowrap;
+}
+
+.venda-valor {
+    white-space: nowrap;
+    min-width: 100px;
+    text-align: right;
+}
+
+.venda-acoes {
+    display: flex;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.dia-fechamento {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 14px 0 18px 0;
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+/* Numa tela estreita a linha vira bloco, senão as colunas se espremem */
+@media (max-width: 900px) {
+    .lista-vendas li {
+        flex-wrap: wrap;
+    }
+
+    .venda-cliente,
+    .venda-itens {
+        flex-basis: 100%;
+    }
+
+    .venda-valor {
+        text-align: left;
+    }
+}
+
+.dia-canceladas {
+    color: var(--danger);
+}

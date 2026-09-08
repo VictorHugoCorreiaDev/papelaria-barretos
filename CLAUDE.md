@@ -78,7 +78,9 @@ Ao criar uma página ou endpoint novo, inclua a guarda correspondente antes de q
 
 **Post/Redirect/Get** — toda página que altera dados trata o `$_POST`, define um toast e faz `header("Location: ...")` + `exit`, sempre **antes** de incluir o `header.php` (veja a seção acima). Siga esse padrão em vez de renderizar HTML após um POST. Vale também para alterações disparadas por GET: `RegistrarVendas.php?remover=N` redireciona depois de mexer no carrinho, senão um F5 remove outro item.
 
-**Paginação** — `Estoque.php`, `ListarVendas.php` e `Relatorios.php` repetem o mesmo bloco: `$limit = 10`, `$page`/`$offset` vindos do `$_GET`, uma consulta `COUNT(*)`, `$totalPaginas`, um ajuste quando `$page > $totalPaginas` e então `bindValue(':limit', ..., PDO::PARAM_INT)` (obrigatório — sem isso o prepare emulado colocaria aspas no LIMIT). Os filtros são propagados nos links `.pag-btn`.
+**Paginação** — `Estoque.php` e `Relatorios.php` repetem o mesmo bloco: `$limit = 10`, `$page`/`$offset` vindos do `$_GET`, uma consulta `COUNT(*)`, `$totalPaginas`, um ajuste quando `$page > $totalPaginas` e então `bindValue(':limit', ..., PDO::PARAM_INT)` (obrigatório — sem isso o prepare emulado colocaria aspas no LIMIT). Os filtros são propagados nos links `.pag-btn`.
+
+O `ListarVendas.php` segue a mesma mecânica, mas **pagina dias, não vendas** (`$diasPorPagina = 7`): a lista é agrupada por data e cada grupo fecha com o total do dia, então paginar por venda partiria um dia entre duas páginas e o fechamento mostraria um total parcial. Ele busca primeiro os dias da página, depois todas as vendas desses dias e os itens de todas elas — três consultas fixas, em vez de uma por venda dentro do laço de exibição.
 
 ## Fluxos de estoque e venda
 
@@ -89,6 +91,8 @@ O estoque é alterado em três lugares, todos dentro de `beginTransaction()`/`co
 - `pages/CancelarVenda.php` — a única reversão: devolve as quantidades a `produtos` e define `status = 'cancelada'`.
 
 `pages/ExcluirProdutos.php` recusa excluir um produto que apareça em `vendas_produtos` (não há FK com cascade) e redireciona com `?erro=vinculado`.
+
+**Vendas canceladas nunca entram em faturamento ou lucro**, em nenhuma tela — nem no fechamento diário do `ListarVendas.php`, nem nos cards do dashboard, nem nos relatórios. Elas aparecem nas listagens (esmaecidas, com badge) para consulta, mas somar uma venda cancelada seria contar dinheiro que não entrou.
 
 ## Indicadores do dashboard
 
