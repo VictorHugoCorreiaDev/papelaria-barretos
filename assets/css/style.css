@@ -1506,3 +1506,31 @@ body.login-page::after {
 .dia-canceladas {
     color: var(--danger);
 }
+
+/* AVISO DE CUSTO NÃO PREENCHIDO */
+
+.aviso-custo {
+    background: #fff8e6;
+    border: 1px solid #e6c260;
+    color: #6b5415;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.aviso-custo a {
+    color: #6b5415;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.aviso-custo.aviso-inline {
+    margin: 10px 0 18px 0;
+}
+
+.margem-negativa {
+    color: var(--danger);
+    font-weight: 600;
+}

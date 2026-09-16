@@ -49,7 +49,8 @@ require_once __DIR__ . '/../includes/header.php';
             <label>Custo de compra</label>
             <input type="number" step="0.01" min="0" name="custo" value="0.00" required>
             <small style="color: var(--text-gray);">
-                Quanto você paga pelo produto. É o que permite calcular o lucro.
+                Quanto você paga pelo produto. Deixando zerado, o lucro deste
+                item aparece igual ao faturamento no dashboard e nos relatórios.
             </small>
         </div>
 

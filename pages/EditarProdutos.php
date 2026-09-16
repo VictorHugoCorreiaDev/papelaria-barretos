@@ -58,6 +58,17 @@ require_once __DIR__ . '/../includes/header.php';
         <label>Custo de compra</label><br>
         <input type="number" step="0.01" min="0" name="custo" value="<?= htmlspecialchars($produto['custo']) ?>"><br>
 
+        <?php if ($produto['custo'] <= 0): ?>
+            <div class="aviso-custo aviso-inline">
+                <strong>Este produto está sem custo de compra.</strong>
+                Sem ele o lucro no dashboard e nos relatórios sai igual ao
+                faturamento, como se o produto não custasse nada.
+                O custo é gravado em cada venda no momento em que ela acontece,
+                então preenchê-lo agora <strong>não corrige</strong> as vendas já
+                registradas — só as próximas.
+            </div>
+        <?php endif; ?>
+
         <label>Quantidade</label><br>
         <input type="number" name="quantidade" value="<?= (int) $produto['quantidade'] ?>"><br><br>
 

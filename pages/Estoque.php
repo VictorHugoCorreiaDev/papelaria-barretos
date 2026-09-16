@@ -12,13 +12,29 @@ $page = max($page, 1);
 
 $offset = ($page - 1) * $limit;
 
+/*
+ * Filtro de produtos sem custo: com mais de cem itens cadastrados, sem um
+ * atalho não há como saber quais ainda faltam preencher — e produto sem
+ * custo entra no lucro como se fosse margem integral.
+ */
+$semCusto = isset($_GET['semcusto']) && $_GET['semcusto'] === '1';
+
 $params = [];
-$where = "";
+$condicoes = [];
 
 if ($busca) {
-    $where = "WHERE nome LIKE :busca";
+    $condicoes[] = "nome LIKE :busca";
     $params[':busca'] = "%$busca%";
 }
+
+if ($semCusto) {
+    $condicoes[] = "custo <= 0";
+}
+
+$where = $condicoes ? 'WHERE ' . implode(' AND ', $condicoes) : '';
+
+// Contagem total de produtos sem custo, independente dos filtros da tela
+$totalSemCusto = (int) $conn->query("SELECT COUNT(*) FROM produtos WHERE custo <= 0")->fetchColumn();
 
 /* TOTAL REGISTROS */
 $stmtTotal = $conn->prepare("SELECT COUNT(*) FROM produtos $where");
@@ -63,19 +79,44 @@ if ($totalRegistros > 0) {
 
 <h2>Estoque</h2>
 
+<?php if ($totalSemCusto > 0): ?>
+    <div class="aviso-custo">
+        <strong><?= $totalSemCusto ?> produto<?= $totalSemCusto == 1 ? '' : 's' ?> sem custo de compra.</strong>
+        Enquanto o custo estiver zerado, o lucro no dashboard e nos relatórios
+        aparece igual ao faturamento. E o custo é gravado na venda no momento em
+        que ela acontece — preencher depois não corrige vendas já registradas.
+
+        <?php if (!$semCusto): ?>
+            <a href="?semcusto=1">Ver só esses produtos</a>
+        <?php else: ?>
+            <a href="?">Ver todos os produtos</a>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
 <div class="card">
 
     <!-- BUSCA -->
-    <form method="GET" style="margin-bottom:20px; display:flex; gap:10px;">
+    <form method="GET" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap;">
         <input
             type="text"
             name="busca"
             placeholder="Buscar produto..."
             value="<?= htmlspecialchars($busca) ?>"
             style="max-width:300px;">
+
+        <?php if ($semCusto): ?>
+            <!-- Mantém o filtro ao buscar dentro dele -->
+            <input type="hidden" name="semcusto" value="1">
+        <?php endif; ?>
+
         <button type="submit" class="btn btn-secondary">
             Buscar
         </button>
+
+        <?php if ($busca || $semCusto): ?>
+            <a href="?" class="btn btn-secondary">Limpar filtros</a>
+        <?php endif; ?>
     </form>
 
     <!-- INFO PAGINAÇÃO -->
@@ -93,7 +134,9 @@ if ($totalRegistros > 0) {
         <thead>
             <tr>
                 <th>Produto</th>
-                <th>Preço</th>
+                <th>Custo de compra</th>
+                <th>Preço de venda</th>
+                <th>Margem</th>
                 <th>Quantidade</th>
                 <th>Ações</th>
             </tr>
@@ -101,10 +144,36 @@ if ($totalRegistros > 0) {
 
         <tbody>
             <?php if (!empty($produtos)): ?>
-                <?php foreach ($produtos as $p): ?>
+                <?php foreach ($produtos as $p):
+                    $temCusto = $p['custo'] > 0;
+                    // Margem sobre o preço de venda: quanto de cada real vendido
+                    // sobra depois de pagar a mercadoria
+                    $margem = $temCusto && $p['preco'] > 0
+                        ? (($p['preco'] - $p['custo']) / $p['preco']) * 100
+                        : null;
+                ?>
                     <tr>
                         <td><?= htmlspecialchars($p['nome']) ?></td>
+
+                        <td>
+                            <?php if ($temCusto): ?>
+                                R$ <?= number_format($p['custo'], 2, ',', '.') ?>
+                            <?php else: ?>
+                                <span class="badge badge-cancelado">Sem custo</span>
+                            <?php endif; ?>
+                        </td>
+
                         <td>R$ <?= number_format($p['preco'], 2, ',', '.') ?></td>
+
+                        <td>
+                            <?php if ($margem === null): ?>
+                                <span style="color: var(--text-gray);">—</span>
+                            <?php else: ?>
+                                <span class="<?= $margem < 0 ? 'margem-negativa' : '' ?>">
+                                    <?= number_format($margem, 1, ',', '.') ?>%
+                                </span>
+                            <?php endif; ?>
+                        </td>
 
                         <td>
                             <?php if ($p['quantidade'] < 0): ?>
@@ -139,18 +208,18 @@ if ($totalRegistros > 0) {
         <div class="paginacao">
 
             <?php if ($page > 1): ?>
-                <a href="?busca=<?= urlencode($busca) ?>&page=<?= $page - 1 ?>" class="pag-btn">«</a>
+                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?>&page=<?= $page - 1 ?>" class="pag-btn">«</a>
             <?php endif; ?>
 
             <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                <a href="?busca=<?= urlencode($busca) ?>&page=<?= $i ?>"
+                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?>&page=<?= $i ?>"
                     class="pag-btn <?= $i == $page ? 'active' : '' ?>">
                     <?= $i ?>
                 </a>
             <?php endfor; ?>
 
             <?php if ($page < $totalPaginas): ?>
-                <a href="?busca=<?= urlencode($busca) ?>&page=<?= $page + 1 ?>" class="pag-btn">»</a>
+                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?>&page=<?= $page + 1 ?>" class="pag-btn">»</a>
             <?php endif; ?>
 
         </div>
