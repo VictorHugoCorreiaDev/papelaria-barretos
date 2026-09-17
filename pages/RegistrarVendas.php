@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/pagamento.php';
+require_once __DIR__ . '/../includes/validacao.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 
@@ -15,15 +16,65 @@ if (!isset($_SESSION['carrinho'])) {
 /*ADICIONAR PRODUTO AO CARRINHO */
 if (isset($_POST['adicionar'])) {
 
-    $produto_id = $_POST['produto_id'];
-    $quantidade = (int)$_POST['quantidade'];
+    $produto_id = (int) ($_POST['produto_id'] ?? 0);
+    $quantidade = quantidadeInteira($_POST['quantidade'] ?? null, 1);
+
+    // Zero ou negativo passava na checagem de estoque (10 >= -5 é verdade) e
+    // uma quantidade negativa chegava a somar ao estoque na finalização
+    if ($quantidade === null) {
+        $_SESSION['toast'] = [
+            'type' => 'error',
+            'message' => 'Informe uma quantidade de pelo menos 1 unidade.'
+        ];
+        header("Location: RegistrarVendas.php");
+        exit;
+    }
 
     $stmt = $conn->prepare("SELECT * FROM produtos WHERE id = ?");
     $stmt->execute([$produto_id]);
     $produto = $stmt->fetch();
 
-    if ($produto && $produto['quantidade'] >= $quantidade) {
+    if (!$produto) {
+        $_SESSION['toast'] = [
+            'type' => 'error',
+            'message' => 'Produto não encontrado.'
+        ];
+        header("Location: RegistrarVendas.php");
+        exit;
+    }
 
+    /*
+     * Conta o que já está no carrinho deste mesmo produto.
+     *
+     * Sem isso, cada adição era conferida sozinha contra o estoque: com 3
+     * unidades disponíveis dava para adicionar 3, e depois mais 3, porque
+     * as duas checagens passavam. O estoque terminava negativo.
+     */
+    $jaNoCarrinho = 0;
+    $posicaoExistente = null;
+
+    foreach ($_SESSION['carrinho'] as $indice => $item) {
+        if ((int) $item['produto_id'] === $produto['id']) {
+            $jaNoCarrinho += (int) $item['quantidade'];
+            $posicaoExistente = $indice;
+        }
+    }
+
+    if ($produto['quantidade'] < $jaNoCarrinho + $quantidade) {
+        $_SESSION['toast'] = [
+            'type' => 'error',
+            'message' => $jaNoCarrinho > 0
+                ? "Estoque insuficiente! Restam {$produto['quantidade']} unidade(s) e o carrinho já tem {$jaNoCarrinho}."
+                : "Estoque insuficiente! Restam {$produto['quantidade']} unidade(s)."
+        ];
+        header("Location: RegistrarVendas.php");
+        exit;
+    }
+
+    // Mesmo produto soma na linha que já existe, em vez de repetir no carrinho
+    if ($posicaoExistente !== null) {
+        $_SESSION['carrinho'][$posicaoExistente]['quantidade'] += $quantidade;
+    } else {
         $_SESSION['carrinho'][] = [
             'produto_id' => $produto['id'],
             'nome' => $produto['nome'],
@@ -31,22 +82,15 @@ if (isset($_POST['adicionar'])) {
             'custo' => $produto['custo'],
             'quantidade' => $quantidade
         ];
-
-        $_SESSION['toast'] = [
-            'type' => 'success',
-            'message' => 'Produto adicionado ao carrinho!'
-        ];
-
-        header("Location: RegistrarVendas.php");
-        exit;
-    } else {
-        $_SESSION['toast'] = [
-            'type' => 'error',
-            'message' => 'Estoque insuficiente!'
-        ];
-        header("Location: RegistrarVendas.php");
-        exit;
     }
+
+    $_SESSION['toast'] = [
+        'type' => 'success',
+        'message' => 'Produto adicionado ao carrinho!'
+    ];
+
+    header("Location: RegistrarVendas.php");
+    exit;
 }
 
 
@@ -111,13 +155,30 @@ if (isset($_POST['finalizar'])) {
                         $item['custo'] ?? 0
                     ]);
 
-                $conn->prepare("UPDATE produtos 
-                    SET quantidade = quantidade - ? 
-                    WHERE id = ?")
-                    ->execute([
-                        $item['quantidade'],
-                        $item['produto_id']
-                    ]);
+                /*
+                 * O WHERE quantidade >= ? faz a checagem e a baixa no mesmo
+                 * comando: se o estoque não cobrir, nenhuma linha é afetada e
+                 * a venda inteira volta atrás.
+                 *
+                 * É o que protege a janela entre montar o carrinho e fechar a
+                 * venda — nesse intervalo uma venda rápida pode ter consumido
+                 * o estoque, e a validação feita na adição já estaria velha.
+                 */
+                $baixa = $conn->prepare("UPDATE produtos
+                    SET quantidade = quantidade - ?
+                    WHERE id = ? AND quantidade >= ?");
+
+                $baixa->execute([
+                    $item['quantidade'],
+                    $item['produto_id'],
+                    $item['quantidade']
+                ]);
+
+                if ($baixa->rowCount() === 0) {
+                    throw new Exception(
+                        'Estoque insuficiente para ' . $item['nome'] . '.'
+                    );
+                }
             }
 
             $conn->commit();
@@ -130,10 +191,19 @@ if (isset($_POST['finalizar'])) {
             exit;
         } catch (Exception $e) {
             $conn->rollBack();
+
+            /*
+             * A mensagem do estoque insuficiente diz qual produto travou a
+             * venda; qualquer outra falha é interna e não ajuda o operador.
+             * O carrinho é mantido para ele ajustar e tentar de novo.
+             */
             $_SESSION['toast'] = [
                 'type' => 'error',
-                'message' => 'Erro ao finalizar venda!'
+                'message' => str_starts_with($e->getMessage(), 'Estoque insuficiente')
+                    ? $e->getMessage() . ' A venda não foi registrada.'
+                    : 'Erro ao finalizar venda!'
             ];
+
             header("Location: RegistrarVendas.php");
             exit;
         }

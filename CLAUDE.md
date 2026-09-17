@@ -92,6 +92,12 @@ O estoque é alterado em três lugares, todos dentro de `beginTransaction()`/`co
 
 `pages/ExcluirProdutos.php` recusa excluir um produto que apareça em `vendas_produtos` (não há FK com cascade) e redireciona com `?erro=vinculado`.
 
+**A baixa de estoque é a própria validação.** Os dois caminhos de venda dão baixa com `UPDATE produtos SET quantidade = quantidade - ? WHERE id = ? AND quantidade >= ?` e conferem o `rowCount()`: zero linhas afetadas significa estoque insuficiente e derruba a transação inteira. Checar antes e atualizar depois deixa uma janela entre as duas coisas — e é por ela que o estoque ficava negativo quando outra venda consumia o saldo no meio do caminho. Não troque por um `UPDATE` sem condição.
+
+No carrinho, a adição valida o **acumulado** (o que já está no carrinho mais o que está entrando), e o mesmo produto soma na linha existente em vez de criar outra. Validar cada adição isolada permitia adicionar 3 unidades duas vezes tendo 3 em estoque.
+
+Quantidades e valores vindos de formulário passam por `quantidadeInteira()` e `valorMonetario()` do `includes/validacao.php`. O `min="0"` do HTML vale só no navegador: sem a validação no servidor, preço e custo negativos eram gravados, e quantidade negativa numa venda *aumentava* o estoque na finalização.
+
 **Vendas canceladas nunca entram em faturamento ou lucro**, em nenhuma tela — nem no fechamento diário do `ListarVendas.php`, nem nos cards do dashboard, nem nos relatórios. Elas aparecem nas listagens (esmaecidas, com badge) para consulta, mas somar uma venda cancelada seria contar dinheiro que não entrou.
 
 ## Indicadores do dashboard

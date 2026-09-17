@@ -44,11 +44,20 @@ try {
         VALUES (?, ?, ?, ?, ?)")
     ->execute([$venda_id, $produto_id, $quantidade, $produto['preco'], $produto['custo']]);
 
-    // Atualizar estoque
-    $conn->prepare("UPDATE produtos 
-        SET quantidade = quantidade - ? 
-        WHERE id = ?")
-    ->execute([$quantidade, $produto_id]);
+    /*
+     * Atualizar estoque — a condição no WHERE revalida no mesmo comando.
+     * A checagem lá em cima foi feita antes da transação abrir, então entre
+     * uma coisa e outra outra venda pode ter levado o estoque.
+     */
+    $baixa = $conn->prepare("UPDATE produtos
+        SET quantidade = quantidade - ?
+        WHERE id = ? AND quantidade >= ?");
+
+    $baixa->execute([$quantidade, $produto_id, $quantidade]);
+
+    if ($baixa->rowCount() === 0) {
+        throw new Exception('Estoque insuficiente');
+    }
 
     $conn->commit();
 
@@ -119,8 +128,12 @@ try {
 
     $conn->rollBack();
 
+    // Estoque insuficiente é situação de balcão, não falha do sistema:
+    // o operador precisa saber o motivo para conferir a prateleira
     echo json_encode([
         'status' => 'erro',
-        'mensagem' => 'Erro ao registrar venda'
+        'mensagem' => $e->getMessage() === 'Estoque insuficiente'
+            ? 'Estoque insuficiente — a venda não foi registrada.'
+            : 'Erro ao registrar venda'
     ]);
 }

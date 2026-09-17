@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/validacao.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 
@@ -9,10 +10,23 @@ $id = (int) ($_GET['id'] ?? 0);
 // header("Location: ...") e nenhuma saída pode ter sido impressa ainda.
 
 if ($_POST) {
-    $nome = $_POST['nome'];
-    $preco = $_POST['preco'];
-    $custo = $_POST['custo'] ?? 0;
-    $quantidade = $_POST['quantidade'];
+    $nome = trim($_POST['nome'] ?? '');
+
+    // Mesma razão do cadastro: sem validar aqui, um POST fora da tela grava
+    // preço e custo negativos
+    $preco = valorMonetario($_POST['preco'] ?? null);
+    $custo = valorMonetario($_POST['custo'] ?? 0);
+    $quantidade = quantidadeInteira($_POST['quantidade'] ?? null, 0);
+
+    if ($nome === '' || $preco === null || $custo === null || $quantidade === null) {
+        $_SESSION['toast'] = [
+            'type' => 'error',
+            'message' => 'Preencha o nome e use valores não negativos em preço, custo e quantidade.'
+        ];
+
+        header("Location: EditarProdutos.php?id=" . $id);
+        exit;
+    }
 
     $stmt = $conn->prepare("UPDATE produtos SET nome=?, preco=?, custo=?, quantidade=? WHERE id=?");
     $stmt->execute([$nome, $preco, $custo, $quantidade, $id]);

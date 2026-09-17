@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/validacao.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 
@@ -8,10 +9,25 @@ require_once __DIR__ . '/../includes/configuracao.php';
 
 if ($_POST) {
 
-    $nome = $_POST['nome'];
-    $preco = $_POST['preco'];
-    $custo = $_POST['custo'] ?? 0;
-    $quantidade = $_POST['quantidade'];
+    $nome = trim($_POST['nome'] ?? '');
+
+    /*
+     * O min="0" dos campos vale só no navegador: um POST montado fora da
+     * tela gravava preço e custo negativos sem obstáculo nenhum.
+     */
+    $preco = valorMonetario($_POST['preco'] ?? null);
+    $custo = valorMonetario($_POST['custo'] ?? 0);
+    $quantidade = quantidadeInteira($_POST['quantidade'] ?? null, 0);
+
+    if ($nome === '' || $preco === null || $custo === null || $quantidade === null) {
+        $_SESSION['toast'] = [
+            'type' => 'error',
+            'message' => 'Preencha o nome e use valores não negativos em preço, custo e quantidade.'
+        ];
+
+        header("Location: CadastrarProdutos.php");
+        exit;
+    }
 
     $sql = "INSERT INTO produtos (nome, preco, custo, quantidade) VALUES (?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
