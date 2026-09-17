@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/pagamento.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
@@ -304,11 +305,12 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
                             </button>
 
                             <?php if ($v['status'] === 'ativa'): ?>
-                                <a href="CancelarVenda.php?id=<?= (int) $v['id'] ?>"
-                                    onclick="return confirm('Tem certeza que deseja cancelar esta venda?')"
-                                    class="btn btn-danger btn-sm">
-                                    Cancelar
-                                </a>
+                                <form method="POST" action="CancelarVenda.php" class="form-inline"
+                                    onsubmit="return confirm('Tem certeza que deseja cancelar esta venda?')">
+                                    <?= campoCsrf() ?>
+                                    <input type="hidden" name="id" value="<?= (int) $v['id'] ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm">Cancelar</button>
+                                </form>
                             <?php endif; ?>
                         </span>
 

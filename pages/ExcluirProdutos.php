@@ -1,15 +1,19 @@
 <?php
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 
-if (!isset($_GET['id'])) {
+// Só aceita POST com token: por GET bastava abrir a URL para excluir
+exigirCsrf('Estoque.php');
+
+if (!isset($_POST['id'])) {
     header("Location: Estoque.php");
     exit;
 }
 
-$id = (int) $_GET['id'];
+$id = (int) $_POST['id'];
 
 // Verifica vínculo
 $stmt = $conn->prepare("SELECT COUNT(*) FROM vendas_produtos WHERE produto_id = ?");

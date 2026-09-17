@@ -1834,3 +1834,9 @@ body.login-page::after {
         display: block;
     }
 }
+
+/* Formulário de ação inline (botões destrutivos dentro de tabelas):
+   sem isto cada form quebraria a linha, empilhando os botões */
+.form-inline {
+    display: inline;
+}

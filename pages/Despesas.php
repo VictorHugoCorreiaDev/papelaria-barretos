@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/validacao.php';
 require_once __DIR__ . '/../includes/pagamento.php';
 require_once __DIR__ . '/../includes/despesa.php';
@@ -261,11 +262,12 @@ require_once __DIR__ . '/../includes/header.php';
                                 Editar
                             </a>
 
-                            <a href="ExcluirDespesa.php?id=<?= (int) $d['id'] ?>"
-                                onclick="return confirm('Deseja excluir esta despesa?')"
-                                class="btn btn-danger btn-sm">
-                                Excluir
-                            </a>
+                            <form method="POST" action="ExcluirDespesa.php" class="form-inline"
+                                onsubmit="return confirm('Deseja excluir esta despesa?')">
+                                <?= campoCsrf() ?>
+                                <input type="hidden" name="id" value="<?= (int) $d['id'] ?>">
+                                <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                            </form>
                         </td>
                     </tr>
                 <?php endforeach; ?>

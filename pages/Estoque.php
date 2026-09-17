@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 require_once __DIR__ . '/../includes/header.php';
@@ -224,11 +225,13 @@ if ($totalRegistros > 0) {
                                 Editar
                             </a>
 
-                            <a href="ExcluirProdutos.php?id=<?= (int) $p['id'] ?>"
-                                onclick="return confirm('Deseja excluir este produto?')"
-                                class="btn btn-danger btn-sm">
-                                Excluir
-                            </a>
+                            <!-- Formulário, não link: excluir por GET acontecia só de abrir a URL -->
+                            <form method="POST" action="ExcluirProdutos.php" class="form-inline"
+                                onsubmit="return confirm('Deseja excluir este produto?')">
+                                <?= campoCsrf() ?>
+                                <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
+                                <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                            </form>
                         </td>
                     </tr>
                 <?php endforeach; ?>

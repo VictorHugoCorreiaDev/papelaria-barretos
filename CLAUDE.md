@@ -73,6 +73,14 @@ Toda rota é protegida, e há duas guardas conforme o tipo de resposta:
 
 Ao criar uma página ou endpoint novo, inclua a guarda correspondente antes de qualquer outra coisa. Só `login.php` fica fora (senão não haveria como autenticar).
 
+## Ações destrutivas
+
+Excluir produto, excluir despesa e cancelar venda exigem **POST com o token da sessão**, conferido pelo `exigirCsrf()` de `includes/csrf.php`. Antes eram links GET: abrir `/pages/ExcluirProdutos.php?id=7` bastava para o produto sumir, e o `confirm()` do JavaScript não protege nada disso — ele não roda quando a URL chega por um link colado, por um pré-carregamento do navegador ou por uma `<img>` numa página qualquer.
+
+Na tela, a ação é um `<form method="POST">` com `campoCsrf()`, um `id` escondido e o `confirm()` no `onsubmit`. A classe `.form-inline` deixa o formulário em `display:inline` para ele não quebrar a linha da tabela ao lado do botão "Editar".
+
+Ao criar uma ação que apaga ou reverte alguma coisa, siga o mesmo caminho: `require_once` do `csrf.php`, `exigirCsrf('PaginaDeVolta.php')` logo no início e `$_POST['id']` em vez de `$_GET['id']`. Token inválido ou ausente devolve o usuário à tela com o toast "Ação não confirmada", sem executar nada.
+
 ## Convenções entre páginas
 
 **Toasts** — canal de mensagens de feedback. Defina `$_SESSION['toast'] = ['type' => 'success'|'error'|'warning', 'message' => '...']` e redirecione; o header da próxima página exibe e limpa a mensagem. Toasts no cliente (respostas AJAX) passam por `mostrarToast()` em `funcoes.js`, que escreve no `#toast` vindo do footer.

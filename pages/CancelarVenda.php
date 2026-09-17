@@ -1,9 +1,13 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 
-$vendaId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+// Cancelar devolve estoque e muda o histórico: exige POST com token
+exigirCsrf('ListarVendas.php');
+
+$vendaId = isset($_POST['id']) ? (int) $_POST['id'] : 0;
 
 if ($vendaId <= 0) {
     die("ID inválido.");
