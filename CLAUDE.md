@@ -177,6 +177,14 @@ Esse script fica **antes da tag do CSS e fora do `funcoes.js`** de propósito: s
 
 Sem escolha salva, vale a preferência do sistema operacional (`prefers-color-scheme`). Todo acesso ao `localStorage` está em `try/catch` — em janela anônima ou com armazenamento bloqueado ele lança exceção, e sem a proteção a página inteira pararia.
 
+## Menu em telas estreitas e impressão
+
+Abaixo de 900px a sidebar sai do fluxo e vira um painel deslizante, aberto pelo botão `.abrir-menu` (`alternarMenu()` no `funcoes.js`). Antes dessa mudança a regra era `display:none` puro: no celular o sistema ficava **sem navegação e sem botão de sair**. O painel fecha no véu, no Esc e ao tocar num item.
+
+A exibição do botão e do véu fica numa media query **no fim do arquivo**, depois das definições base desses elementos. Numa media query colocada antes delas, o `display:none` base venceria por ordem de cascata e o botão nunca apareceria — foi o que aconteceu na primeira tentativa.
+
+O bloco `@media print` força fundo branco e texto preto sobrescrevendo os tokens, inclusive os do tema escuro, e esconde navegação, botões e formulários. Sem ele, imprimir com o tema escuro sai fundo preto: ilegível no papel e um gasto enorme de tinta.
+
 ## Estilos
 
 `assets/css/style.css` é a única folha de estilo e começa com um bloco `:root` de design tokens (`--primary`, `--success`, `--danger`, `--bg-*`, `--text-*`, `--radius-*`). Reaproveite as classes de componente existentes — `.card`, `.cards-grid`, `.indicador`, `.btn` combinado com `.btn-primary`/`.btn-secondary`/`.btn-danger`/`.btn-success`/`.btn-sm`, `.badge-ativa`/`.badge-cancelado`, `.paginacao`/`.pag-btn`, `.modal` — em vez de adicionar estilos inline.

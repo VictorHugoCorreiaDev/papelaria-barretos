@@ -1116,8 +1116,32 @@ body.login-page::after {
    ========================================================= */
 
 @media (max-width: 900px) {
+    /*
+     * A sidebar deixa de ocupar espaço no fluxo e passa a deslizar sobre o
+     * conteúdo. Antes era display:none puro, o que tirava do celular toda a
+     * navegação e até o botão de sair.
+     */
     .sidebar {
-        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1000;
+        width: 260px;
+        max-width: 84vw;
+        overflow-y: auto;
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+    }
+
+    .menu-aberto .sidebar {
+        transform: translateX(0);
+        box-shadow: var(--shadow-4);
+    }
+
+    /* Espaço para o botão de menu não cobrir o conteúdo */
+    .content {
+        padding-top: var(--space-8);
     }
 
     .main {
@@ -1686,4 +1710,127 @@ body.login-page::after {
 
 [data-theme="dark"] .btn-tema .icone-sol {
     display: block;
+}
+
+/* BOTÃO DE MENU E VÉU (telas estreitas) */
+
+.abrir-menu {
+    display: none;
+    position: fixed;
+    top: var(--space-4);
+    left: var(--space-4);
+    z-index: 1001;
+
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+
+    background: var(--bg-surface);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-md);
+    color: var(--fg-1);
+    cursor: pointer;
+    box-shadow: var(--shadow-2);
+}
+
+.abrir-menu:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}
+
+.veu-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: var(--scrim);
+}
+
+/* O véu só cobre a tela com o menu aberto; fechado, não intercepta cliques */
+.veu-menu[hidden] {
+    display: none;
+}
+
+/* IMPRESSÃO
+   Sem isto, imprimir no tema escuro sai com fundo preto: ilegível no papel
+   e um desperdício de tinta. Também tira da folha o que não é conteúdo. */
+
+@media print {
+    :root,
+    [data-theme="dark"] {
+        --bg-canvas: #FFFFFF;
+        --bg-surface: #FFFFFF;
+        --bg-raised: #FFFFFF;
+        --bg-sunken: #FFFFFF;
+        --fg-1: #000000;
+        --fg-2: #1A1A1A;
+        --fg-3: #444444;
+        --fg-4: #666666;
+        --border-1: #CCCCCC;
+        --border-2: #AAAAAA;
+    }
+
+    body {
+        background: #FFFFFF;
+        color: #000000;
+    }
+
+    /* Navegação, ações e controles não fazem sentido no papel */
+    .sidebar,
+    .abrir-menu,
+    .veu-menu,
+    .topbar,
+    .modal,
+    .paginacao,
+    .btn,
+    .venda-acoes,
+    .grafico-periodos,
+    .saudacao-acoes,
+    .filtros-vendas,
+    form {
+        display: none !important;
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .content {
+        padding: 0;
+    }
+
+    .card {
+        border: 1px solid #CCCCCC;
+        box-shadow: none;
+        break-inside: avoid;
+    }
+
+    /* Uma linha de tabela partida entre páginas fica ilegível */
+    tr,
+    .lista-painel li,
+    .dia-vendas {
+        break-inside: avoid;
+    }
+
+    a {
+        text-decoration: none;
+        color: #000000;
+    }
+}
+
+/*
+ * A exibição do botão e do véu fica AQUI, depois das definições base acima:
+ * numa media query colocada antes delas, o display:none base venceria por
+ * ordem de cascata e o botão nunca apareceria.
+ */
+@media (max-width: 900px) {
+    .abrir-menu {
+        display: inline-flex;
+    }
+
+    .veu-menu:not([hidden]) {
+        display: block;
+    }
 }

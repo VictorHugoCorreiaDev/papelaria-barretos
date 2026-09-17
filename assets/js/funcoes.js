@@ -220,6 +220,58 @@ function alternarTema() {
     aplicarTema(temaAtual() === 'dark' ? 'light' : 'dark');
 }
 
+// ===== Menu lateral em telas estreitas =====
+
+/*
+ * Abaixo de 900px a sidebar vira um painel que desliza sobre o conteúdo.
+ * Em telas largas nada disso aparece: o botão e o véu ficam escondidos pelo
+ * CSS e o menu segue fixo como sempre.
+ */
+
+function menuAberto() {
+    return document.body.classList.contains('menu-aberto');
+}
+
+function abrirMenu() {
+    const veu = document.getElementById('veuMenu');
+    const botao = document.querySelector('.abrir-menu');
+
+    document.body.classList.add('menu-aberto');
+    if (veu) veu.hidden = false;
+    if (botao) botao.setAttribute('aria-expanded', 'true');
+}
+
+function fecharMenu() {
+    const veu = document.getElementById('veuMenu');
+    const botao = document.querySelector('.abrir-menu');
+
+    document.body.classList.remove('menu-aberto');
+    if (veu) veu.hidden = true;
+    if (botao) botao.setAttribute('aria-expanded', 'false');
+}
+
+function alternarMenu() {
+    menuAberto() ? fecharMenu() : abrirMenu();
+}
+
+window.addEventListener('DOMContentLoaded', function () {
+    // Tocar num item de menu deve levar à página e fechar o painel
+    document.querySelectorAll('.sidebar nav a').forEach(function (link) {
+        link.addEventListener('click', fecharMenu);
+    });
+});
+
+// Esc fecha o menu, como já faz com os modais
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') fecharMenu();
+});
+
+// Ao alargar a janela o menu volta a ser fixo; deixar a classe ligada
+// manteria o véu por cima do conteúdo
+window.addEventListener('resize', function () {
+    if (window.innerWidth > 900 && menuAberto()) fecharMenu();
+});
+
 // ===== Busca de produto nos selects de venda =====
 
 /*

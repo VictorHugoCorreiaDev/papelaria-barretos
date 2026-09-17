@@ -34,8 +34,24 @@ $itensMenu = [
 ];
 ?>
 <div class="layout">
+    <!--
+      Abaixo de 900px a sidebar sai do fluxo e vira um painel deslizante.
+      Sem este botão ela simplesmente sumia (display:none) e não havia como
+      navegar nem sair do sistema pelo celular.
+    -->
+    <button type="button" class="abrir-menu" onclick="alternarMenu()"
+        aria-label="Abrir menu" aria-expanded="false" aria-controls="menuLateral">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+    </button>
+
+    <!-- Véu que escurece o conteúdo e fecha o menu ao toque -->
+    <div class="veu-menu" id="veuMenu" onclick="fecharMenu()" hidden></div>
+
     <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="menuLateral">
         <div class="logo">
             <img src="/assets/img/logo.webp" alt="Bazar e Papelaria Barretos">
         </div>
