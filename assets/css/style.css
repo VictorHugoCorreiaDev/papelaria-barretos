@@ -1590,3 +1590,24 @@ body.login-page::after {
     font-size: 11px;
     color: var(--danger);
 }
+
+/* LANÇAMENTO DE DESPESA */
+
+.despesa-linha {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.form-despesa .form-group {
+    margin-bottom: 15px;
+}
+
+.indicador .comparativo a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.indicador .comparativo a:hover {
+    text-decoration: underline;
+}

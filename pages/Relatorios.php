@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/validacao.php';
 require_once __DIR__ . '/../includes/pagamento.php';
+require_once __DIR__ . '/../includes/despesa.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 require_once __DIR__ . '/../includes/header.php';
@@ -84,6 +85,34 @@ $stmtPagamentos = $conn->prepare("
 ");
 $stmtPagamentos->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
 $pagamentos = $stmtPagamentos->fetchAll(PDO::FETCH_ASSOC);
+
+/*
+ * DESPESAS DO PERÍODO
+ *
+ * O lucro das vendas é só margem de produto: não desconta aluguel, energia
+ * nem fornecedores. Trazendo as despesas, o relatório mostra o resultado
+ * real — quanto sobrou de fato.
+ */
+$stmtDespesas = $conn->prepare("
+    SELECT COALESCE(SUM(valor), 0)
+    FROM despesas
+    WHERE data_despesa BETWEEN :inicio AND :fim
+");
+$stmtDespesas->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
+$totalDespesasPeriodo = (float) $stmtDespesas->fetchColumn();
+
+$resultado = $lucro - $totalDespesasPeriodo;
+
+$stmtDespesasCategoria = $conn->prepare("
+    SELECT categoria, COALESCE(SUM(valor), 0) AS total
+    FROM despesas
+    WHERE data_despesa BETWEEN :inicio AND :fim
+    GROUP BY categoria
+    ORDER BY total DESC
+    LIMIT 5
+");
+$stmtDespesasCategoria->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
+$despesasPorCategoria = $stmtDespesasCategoria->fetchAll(PDO::FETCH_ASSOC);
 
 /*
  * PRODUTOS MAIS VENDIDOS
@@ -233,9 +262,26 @@ if ($totalRegistros > 0) {
     </div>
 
     <div class="card indicador">
-        <h3>📈 Lucro</h3>
+        <h3>📈 Lucro das vendas</h3>
         <span>R$ <?= number_format($lucro, 2, ',', '.') ?></span>
         <small class="comparativo">margem de <?= number_format($margem, 1, ',', '.') ?>%</small>
+    </div>
+
+    <div class="card indicador">
+        <h3>💸 Despesas</h3>
+        <span>R$ <?= number_format($totalDespesasPeriodo, 2, ',', '.') ?></span>
+        <small class="comparativo"><a href="Despesas.php">lançar ou consultar</a></small>
+    </div>
+
+    <?php /* O número que importa: lucro das vendas menos as despesas do período */ ?>
+    <div class="card indicador">
+        <h3>🧮 Resultado do período</h3>
+        <span class="<?= $resultado < 0 ? 'margem-negativa' : '' ?>">
+            R$ <?= number_format($resultado, 2, ',', '.') ?>
+        </span>
+        <small class="comparativo">
+            <?= $resultado < 0 ? 'as despesas superaram o lucro das vendas' : 'lucro das vendas menos as despesas' ?>
+        </small>
     </div>
 
 </div>

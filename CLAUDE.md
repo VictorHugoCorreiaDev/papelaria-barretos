@@ -30,6 +30,7 @@ Não há arquivo `.sql` de schema, mas o `README.md` traz o DDL das quatro tabel
 - `produtos(id, nome, preco, custo, quantidade, created_at)` — `quantidade` é o estoque corrente; `custo` é o preço de compra, usado para o lucro no dashboard; `created_at` existe na tabela mas nenhuma tela usa.
 - `vendas(id, total, desconto, cliente, forma_pagamento, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas. **`total` é o valor líquido**, o que de fato entrou no caixa: é ele que alimenta faturamento e lucro em todas as telas. O `desconto` fica registrado à parte, para consulta; o valor bruto, quando precisar, é `total + desconto`.
 - `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario, custo_unitario)` — congelam preço e custo no momento da venda, de modo que totais e lucros históricos sobrevivem a alterações de preço ou de custo.
+- `despesas(id, descricao, categoria, valor, data_despesa, forma_pagamento, observacao, created_at)` — gastos do negócio. Não tem relação com vendas nem com estoque, e por isso pode ser excluída de fato, diferente de venda. As categorias são uma lista fixa em `includes/despesa.php`: texto livre faria "Energia", "energia" e "Luz" virarem três grupos no relatório.
 
 ## Estrutura das páginas
 
