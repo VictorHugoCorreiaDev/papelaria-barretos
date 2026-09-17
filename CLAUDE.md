@@ -169,6 +169,14 @@ O offset é fixo em vez do nome `America/Sao_Paulo` porque os nomes dependem das
 
 `created_at` é `TIMESTAMP`, e não `DATETIME`: o MySQL guarda o valor internamente em UTC e converte para o fuso da sessão na leitura e na gravação. Por isso o instante registrado sempre esteve certo mesmo antes da correção — o que saía errado era só a exibição. Consequência prática: **nunca "conserte" horários com `UPDATE` somando horas**; ajuste o fuso da sessão e todos os registros passam a aparecer certos sozinhos.
 
+## Tema claro e escuro
+
+Os tokens do tema escuro já existiam no `style.css` sob `[data-theme="dark"]`, incluindo ajustes da logo, do seletor de data e da tela de login. O que faltava era ligar: um script no `<head>` do `header.php` e do `login.php` lê a escolha do `localStorage` e aplica o atributo no `<html>`.
+
+Esse script fica **antes da tag do CSS e fora do `funcoes.js`** de propósito: se esperasse o rodapé, a tela apareceria clara por um instante antes de escurecer. O `funcoes.js` cuida só da alternância e do ícone do botão, que dependem da página existir.
+
+Sem escolha salva, vale a preferência do sistema operacional (`prefers-color-scheme`). Todo acesso ao `localStorage` está em `try/catch` — em janela anônima ou com armazenamento bloqueado ele lança exceção, e sem a proteção a página inteira pararia.
+
 ## Estilos
 
 `assets/css/style.css` é a única folha de estilo e começa com um bloco `:root` de design tokens (`--primary`, `--success`, `--danger`, `--bg-*`, `--text-*`, `--radius-*`). Reaproveite as classes de componente existentes — `.card`, `.cards-grid`, `.indicador`, `.btn` combinado com `.btn-primary`/`.btn-secondary`/`.btn-danger`/`.btn-success`/`.btn-sm`, `.badge-ativa`/`.badge-cancelado`, `.paginacao`/`.pag-btn`, `.modal` — em vez de adicionar estilos inline.

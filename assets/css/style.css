@@ -1641,3 +1641,27 @@ body.login-page::after {
     background: var(--primary);
     border-radius: 2px;
 }
+
+/* BOTÃO DE ALTERNAR TEMA */
+
+.btn-tema {
+    background: transparent;
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-sm);
+    padding: 5px 9px;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--fg-2);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-tema:hover {
+    background: var(--bg-sunken);
+    border-color: var(--border-2);
+}
+
+.btn-tema:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+}

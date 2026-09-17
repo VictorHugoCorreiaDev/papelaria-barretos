@@ -67,6 +67,9 @@ window.addEventListener('load', atualizarValores);
 // Busca de produto nas duas telas de venda; cada uma tem seus próprios ids
 // e a função ignora em silêncio a que não existir na página atual
 window.addEventListener('DOMContentLoaded', function () {
+    // Só acerta o ícone: o tema já foi aplicado lá no <head>
+    aplicarTema(temaAtual());
+
     ativarBuscaProduto('buscaProdutoRapida', 'produto', 'contadorProdutosRapida');
     ativarBuscaProduto('buscaProdutoCarrinho', 'produtoCarrinho', 'contadorProdutosCarrinho');
     ativarDesconto();
@@ -179,6 +182,40 @@ function sessaoExpirada() {
 
 function fecharModal() {
     document.getElementById("modalItens").style.display = "none";
+}
+
+// ===== Tema claro e escuro =====
+
+/*
+ * O tema em si é aplicado no <head>, antes do CSS carregar, para a tela não
+ * piscar claro antes de escurecer. Aqui ficam só a alternância e o ícone do
+ * botão, que dependem da página já existir.
+ */
+
+function temaAtual() {
+    return document.documentElement.getAttribute('data-theme') || 'light';
+}
+
+function aplicarTema(tema) {
+    document.documentElement.setAttribute('data-theme', tema);
+
+    try {
+        localStorage.setItem('tema', tema);
+    } catch (e) {
+        // Sem localStorage a escolha vale só para esta página; melhor isso
+        // do que o botão não responder
+    }
+
+    const icone = document.getElementById('iconeTema');
+    const botao = document.getElementById('alternarTema');
+
+    // O ícone mostra o que o clique VAI fazer, não o estado atual
+    if (icone) icone.textContent = tema === 'dark' ? '☀️' : '🌙';
+    if (botao) botao.title = tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro';
+}
+
+function alternarTema() {
+    aplicarTema(temaAtual() === 'dark' ? 'light' : 'dark');
 }
 
 // ===== Busca de produto nos selects de venda =====

@@ -39,6 +39,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Login - Papelaria Barretos</title>
+
+    <?php
+    // Mesmo script do header.php: a tela de login também respeita o tema
+    // escolhido, e aplicá-lo antes do CSS evita o pisca de tela clara
+    ?>
+    <script>
+        (function () {
+            try {
+                var salvo = localStorage.getItem('tema');
+
+                if (!salvo) {
+                    salvo = window.matchMedia('(prefers-color-scheme: dark)').matches
+                        ? 'dark'
+                        : 'light';
+                }
+
+                document.documentElement.setAttribute('data-theme', salvo);
+            } catch (e) {
+                // Sem localStorage segue o tema claro, padrão do CSS
+            }
+        })();
+    </script>
+
     <?php
     // O login não passa pelo header.php, então repete aqui o parâmetro de
     // versão — sem ele o cache de trinta dias da hospedagem seguraria a
