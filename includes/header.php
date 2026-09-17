@@ -87,13 +87,30 @@ if (session_status() === PHP_SESSION_NONE) {
 
                 <div class="topbar-user">
                     <!--
-                      O rótulo e o título são preenchidos pelo JS conforme o
-                      tema ativo — no HTML não dá para saber qual está valendo,
-                      já que a decisão acontece no navegador.
+                      Os dois ícones ficam no HTML e o CSS mostra um ou outro
+                      conforme o data-theme. Assim o JS só troca o atributo no
+                      <html>, sem precisar reescrever o conteúdo do botão — e o
+                      ícone certo já aparece no primeiro render, sem pisca.
+
+                      O ícone mostra o que o clique VAI fazer: lua no tema
+                      claro, sol no escuro.
                     -->
                     <button type="button" id="alternarTema" class="btn-tema"
-                        onclick="alternarTema()" title="Alternar tema">
-                        <span id="iconeTema">🌙</span>
+                        onclick="alternarTema()" aria-label="Alternar tema"
+                        title="Alternar tema">
+
+                        <svg class="icone-lua" width="18" height="18" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+
+                        <svg class="icone-sol" width="18" height="18" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4" />
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                        </svg>
                     </button>
 
                     <span>👤 <?= htmlspecialchars($_SESSION['usuario'] ?? '') ?></span>

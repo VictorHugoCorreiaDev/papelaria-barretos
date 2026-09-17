@@ -206,12 +206,14 @@ function aplicarTema(tema) {
         // do que o botão não responder
     }
 
-    const icone = document.getElementById('iconeTema');
+    // A troca do ícone é do CSS, por [data-theme]; aqui só o texto de apoio
     const botao = document.getElementById('alternarTema');
 
-    // O ícone mostra o que o clique VAI fazer, não o estado atual
-    if (icone) icone.textContent = tema === 'dark' ? '☀️' : '🌙';
-    if (botao) botao.title = tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro';
+    if (botao) {
+        const rotulo = tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro';
+        botao.title = rotulo;
+        botao.setAttribute('aria-label', rotulo);
+    }
 }
 
 function alternarTema() {

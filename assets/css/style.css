@@ -1645,23 +1645,43 @@ body.login-page::after {
 /* BOTÃO DE ALTERNAR TEMA */
 
 .btn-tema {
-    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+
+    background: var(--bg-surface);
     border: 1px solid var(--border-1);
-    border-radius: var(--radius-sm);
-    padding: 5px 9px;
-    font-size: 15px;
-    line-height: 1;
-    cursor: pointer;
+    border-radius: var(--radius-md);
+
     color: var(--fg-2);
-    transition: background 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-tema:hover {
     background: var(--bg-sunken);
     border-color: var(--border-2);
+    color: var(--fg-1);
 }
 
 .btn-tema:focus-visible {
     outline: none;
     box-shadow: var(--shadow-focus);
+}
+
+/* Um ícone por tema: o CSS decide qual aparece, então o certo já vem no
+   primeiro render, sem depender do JS e sem troca visível */
+.btn-tema .icone-sol {
+    display: none;
+}
+
+[data-theme="dark"] .btn-tema .icone-lua {
+    display: none;
+}
+
+[data-theme="dark"] .btn-tema .icone-sol {
+    display: block;
 }
