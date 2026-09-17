@@ -1611,3 +1611,33 @@ body.login-page::after {
 .indicador .comparativo a:hover {
     text-decoration: underline;
 }
+
+/* COMPARATIVO DOS ÚLTIMOS MESES */
+
+.tabela-comparativo td,
+.tabela-comparativo th {
+    white-space: nowrap;
+}
+
+/* O mês corrente ainda está em andamento: destacado para não ser lido
+   como um mês fechado ao comparar com os anteriores */
+.tabela-comparativo .mes-atual {
+    background: var(--bg-light);
+    font-weight: 600;
+}
+
+.barra-mes {
+    display: block;
+    height: 4px;
+    margin-top: 5px;
+    background: var(--border-color);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.barra-mes span {
+    display: block;
+    height: 100%;
+    background: var(--primary);
+    border-radius: 2px;
+}

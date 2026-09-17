@@ -76,15 +76,32 @@ $stmtCategorias = $conn->prepare("
 $stmtCategorias->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
 $porCategoria = $stmtCategorias->fetchAll(PDO::FETCH_ASSOC);
 
-/* LISTAGEM */
+/* LISTAGEM PAGINADA — um período longo pode ter centenas de lançamentos */
+
+$limit = 15;
+$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+$page = max($page, 1);
+
+$totalPaginas = (int) ceil($quantidadeDespesas / $limit);
+
+if ($page > $totalPaginas && $totalPaginas > 0) {
+    $page = $totalPaginas;
+}
+
+$offset = ($page - 1) * $limit;
 
 $stmtLista = $conn->prepare("
     SELECT *
     FROM despesas
     WHERE data_despesa BETWEEN :inicio AND :fim
     ORDER BY data_despesa DESC, id DESC
+    LIMIT :limit OFFSET :offset
 ");
-$stmtLista->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
+$stmtLista->bindValue(':inicio', $dataInicio);
+$stmtLista->bindValue(':fim', $dataFim);
+$stmtLista->bindValue(':limit', $limit, PDO::PARAM_INT);
+$stmtLista->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmtLista->execute();
 $despesas = $stmtLista->fetchAll(PDO::FETCH_ASSOC);
 
 require_once __DIR__ . '/../includes/header.php';
@@ -239,6 +256,11 @@ require_once __DIR__ . '/../includes/header.php';
                         <td>R$ <?= number_format($d['valor'], 2, ',', '.') ?></td>
 
                         <td>
+                            <a href="EditarDespesa.php?id=<?= (int) $d['id'] ?>"
+                                class="btn btn-primary btn-sm">
+                                Editar
+                            </a>
+
                             <a href="ExcluirDespesa.php?id=<?= (int) $d['id'] ?>"
                                 onclick="return confirm('Deseja excluir esta despesa?')"
                                 class="btn btn-danger btn-sm">
@@ -249,6 +271,28 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
+
+        <?php if ($totalPaginas > 1): ?>
+            <div class="paginacao">
+                <?php
+                // O período viaja nos links, senão a página 2 mostraria outro intervalo
+                $filtro = '?inicio=' . urlencode($dataInicio) . '&fim=' . urlencode($dataFim);
+                ?>
+
+                <?php if ($page > 1): ?>
+                    <a href="<?= $filtro ?>&page=<?= $page - 1 ?>" class="pag-btn">«</a>
+                <?php endif; ?>
+
+                <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
+                    <a href="<?= $filtro ?>&page=<?= $i ?>"
+                        class="pag-btn <?= $i == $page ? 'active' : '' ?>"><?= $i ?></a>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPaginas): ?>
+                    <a href="<?= $filtro ?>&page=<?= $page + 1 ?>" class="pag-btn">»</a>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 
 </div>

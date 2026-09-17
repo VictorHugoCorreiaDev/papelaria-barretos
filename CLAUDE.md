@@ -103,13 +103,23 @@ Quantidades e valores vindos de formulário passam por `quantidadeInteira()` e `
 
 ## Indicadores do dashboard
 
-Os cards mostram o **mês corrente**, não o acumulado histórico: vendas no mês, faturamento, lucro (com margem), hoje e o ticket médio do mês. São renderizados pelo `dashboard.php` e reescritos pelo `atualizarCards()` do `funcoes.js` depois de cada venda rápida. Três coisas precisam continuar alinhadas:
+Os cards mostram o **mês corrente**, não o acumulado histórico: vendas no mês, faturamento, lucro das vendas (com margem), resultado do mês (lucro menos despesas), hoje e o ticket médio.
+
+O **Resultado do mês** repete o cálculo do `Relatorios.php`. As duas telas precisam dizer o mesmo número para o mesmo período — quando o dashboard mostrava só a margem e o relatório já descontava despesas, uma das duas estava mentindo. São renderizados pelo `dashboard.php` e reescritos pelo `atualizarCards()` do `funcoes.js` depois de cada venda rápida. Três coisas precisam continuar alinhadas:
 
 - Os `<span>` carregam os ids `cardVendasMes`, `cardFaturamentoMes`, `cardLucroMes`, `cardMargemMes`, `cardTicketMedioMes`, `cardReceitaHoje` e `cardVendasHoje` — é por eles que o JS acha os elementos.
 - Os valores monetários já saem do servidor com `R$`, porque o JS os reescreve com `Intl.NumberFormat`, que também traz o símbolo. Sem isso o card mudaria de formato entre o carregamento e a atualização.
 - O `ajax_venda_rapida.php` repete as **mesmas consultas** do `dashboard.php` — mesmo recorte de mês e o mesmo `status = 'ativa'`. Divergir aí faz o card mostrar um número depois da venda rápida e outro ao recarregar.
 
 O lucro vem de `SUM(quantidade * custo_unitario)` na `vendas_produtos`, não de um campo em `vendas` — a tabela de vendas guarda só o total faturado. Produto cadastrado sem custo entra como custo zero, o que infla o lucro; por isso o campo é obrigatório no formulário.
+
+## Telas de conferência e backup
+
+`pages/FechamentoCaixa.php` junta num lugar só o que o dia produziu: entradas por forma de pagamento, despesas pagas, lucro e resultado. O card **Dinheiro em caixa** é o que se compara com a gaveta — recebido em dinheiro menos despesas pagas em dinheiro; o que entrou por Pix ou cartão não está lá. Tela só de leitura.
+
+`pages/Configuracoes.php` lista as tabelas para backup e `pages/Backup.php` exporta cada uma em CSV. O nome da tabela entra no SQL por interpolação (não dá para parametrizar nome de tabela), então **só passa o que estiver na lista `$tabelasPermitidas`** — e `usuarios` fica fora de propósito, para as senhas não saírem em arquivo.
+
+O comparativo dos últimos seis meses no dashboard roda três consultas por mês. Com seis meses são dezoito consultas leves; se o período crescer, vale trocar por uma consulta agrupada.
 
 ## Migrações
 

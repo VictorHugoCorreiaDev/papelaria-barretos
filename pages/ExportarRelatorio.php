@@ -15,7 +15,7 @@ $dataInicio = dataValida($_GET['inicio'] ?? null, date('Y-m-d'));
 $dataFim = dataValida($_GET['fim'] ?? null, date('Y-m-d'));
 
 $sql = "
-    SELECT v.id, v.total, v.created_at, v.status,
+    SELECT v.id, v.total, v.desconto, v.created_at, v.status,
         COALESCE((
             SELECT SUM(vp.quantidade * vp.custo_unitario)
             FROM vendas_produtos vp
@@ -47,10 +47,11 @@ fwrite($saida, "\xEF\xBB\xBF");
  */
 $sep = ';';
 
-fputcsv($saida, ['ID', 'Data', 'Total', 'Custo', 'Lucro', 'Status'], $sep);
+fputcsv($saida, ['ID', 'Data', 'Desconto', 'Total pago', 'Custo', 'Lucro', 'Status'], $sep);
 
 $totalFaturado = 0;
 $totalCusto = 0;
+$totalDesconto = 0;
 $vendasAtivas = 0;
 
 foreach ($vendas as $v) {
@@ -60,12 +61,15 @@ foreach ($vendas as $v) {
     if ($ativa) {
         $totalFaturado += $v['total'];
         $totalCusto += $v['custo'];
+        $totalDesconto += $v['desconto'];
         $vendasAtivas++;
     }
 
     fputcsv($saida, [
         $v['id'],
         date('d/m/Y H:i', strtotime($v['created_at'])),
+        // O total é líquido; sem esta coluna não dá para reconciliar com o bruto
+        number_format($v['desconto'], 2, ',', ''),
         number_format($v['total'], 2, ',', ''),
         // Canceladas não têm lucro a realizar; o custo também não se aplica
         $ativa ? number_format($v['custo'], 2, ',', '') : '',
@@ -79,6 +83,7 @@ fputcsv($saida, [], $sep);
 fputcsv($saida, [
     'TOTAL (' . $vendasAtivas . ' venda(s) ativa(s))',
     '',
+    number_format($totalDesconto, 2, ',', ''),
     number_format($totalFaturado, 2, ',', ''),
     number_format($totalCusto, 2, ',', ''),
     number_format($totalFaturado - $totalCusto, 2, ',', ''),

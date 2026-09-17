@@ -43,6 +43,22 @@ $lucroMes = $faturamentoMes - $custoMes;
 $margemMes = $faturamentoMes > 0 ? ($lucroMes / $faturamentoMes) * 100 : 0;
 $ticketMedioMes = $vendasMes > 0 ? $faturamentoMes / $vendasMes : 0;
 
+/*
+ * Despesas do mês e resultado real.
+ *
+ * O lucro acima é só margem de produto. Sem descontar as despesas, esta
+ * tela mostraria um número e o relatório outro para o mesmo mês — e a
+ * diferença é justamente o que decide se o mês fechou no azul.
+ */
+$despesasMes = (float) $conn->query("
+    SELECT COALESCE(SUM(valor), 0)
+    FROM despesas
+    WHERE YEAR(data_despesa) = YEAR(CURDATE())
+      AND MONTH(data_despesa) = MONTH(CURDATE())
+")->fetchColumn();
+
+$resultadoMes = $lucroMes - $despesasMes;
+
 // Hoje
 $hoje = $conn->query("
     SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
@@ -99,6 +115,62 @@ if ($vendasHoje === 0) {
     $resumoDoDia = $vendasHoje . ($vendasHoje === 1 ? ' venda' : ' vendas')
         . ' hoje · R$ ' . number_format($receitaHoje, 2, ',', '.') . ' faturados.';
 }
+
+/*
+ * COMPARATIVO DOS ÚLTIMOS MESES
+ *
+ * O número do mês corrente sozinho não diz se o negócio está melhorando.
+ * Traz faturamento, lucro e despesas de cada um dos últimos seis meses,
+ * para a leitura ser de tendência e não de foto.
+ */
+$comparativo = [];
+
+for ($i = 5; $i >= 0; $i--) {
+    $referencia = date('Y-m-01', strtotime("-$i month"));
+    $primeiroDia = date('Y-m-01', strtotime($referencia));
+    $ultimoDia = date('Y-m-t', strtotime($referencia));
+
+    $stmtMes = $conn->prepare("
+        SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
+        FROM vendas
+        WHERE status = 'ativa' AND DATE(created_at) BETWEEN :inicio AND :fim
+    ");
+    $stmtMes->execute([':inicio' => $primeiroDia, ':fim' => $ultimoDia]);
+    $dadosMes = $stmtMes->fetch(PDO::FETCH_ASSOC);
+
+    $stmtCustoMes = $conn->prepare("
+        SELECT COALESCE(SUM(vp.quantidade * vp.custo_unitario), 0)
+        FROM vendas_produtos vp
+        JOIN vendas v ON v.id = vp.venda_id
+        WHERE v.status = 'ativa' AND DATE(v.created_at) BETWEEN :inicio AND :fim
+    ");
+    $stmtCustoMes->execute([':inicio' => $primeiroDia, ':fim' => $ultimoDia]);
+    $custoDoMes = (float) $stmtCustoMes->fetchColumn();
+
+    $stmtDespesaMes = $conn->prepare("
+        SELECT COALESCE(SUM(valor), 0)
+        FROM despesas
+        WHERE data_despesa BETWEEN :inicio AND :fim
+    ");
+    $stmtDespesaMes->execute([':inicio' => $primeiroDia, ':fim' => $ultimoDia]);
+    $despesaDoMes = (float) $stmtDespesaMes->fetchColumn();
+
+    $faturamentoDoMes = (float) $dadosMes['faturamento'];
+    $lucroDoMes = $faturamentoDoMes - $custoDoMes;
+
+    $comparativo[] = [
+        'rotulo' => $meses[(int) date('n', strtotime($referencia))],
+        'ano' => date('Y', strtotime($referencia)),
+        'faturamento' => $faturamentoDoMes,
+        'lucro' => $lucroDoMes,
+        'despesas' => $despesaDoMes,
+        'resultado' => $lucroDoMes - $despesaDoMes,
+        'atual' => $i === 0,
+    ];
+}
+
+// Escala das barras: o maior faturamento do período vira 100%
+$maiorFaturamentoMes = max(array_column($comparativo, 'faturamento')) ?: 1;
 
 /*
  * GRÁFICO DE FATURAMENTO
@@ -222,10 +294,25 @@ $ultimasVendas = $conn->query("
     </div>
 
     <div class="card indicador">
-        <h3>📈 Lucro do mês</h3>
+        <h3>📈 Lucro das vendas</h3>
         <span id="cardLucroMes">R$ <?= number_format($lucroMes, 2, ',', '.') ?></span>
         <small class="comparativo">
             margem de <span id="cardMargemMes"><?= number_format($margemMes, 1, ',', '.') ?></span>%
+        </small>
+    </div>
+
+    <?php /* Mesmo cálculo do Relatorios.php — as duas telas precisam dizer o mesmo */ ?>
+    <div class="card indicador">
+        <h3>🧮 Resultado do mês</h3>
+        <span class="<?= $resultadoMes < 0 ? 'margem-negativa' : '' ?>">
+            R$ <?= number_format($resultadoMes, 2, ',', '.') ?>
+        </span>
+        <small class="comparativo">
+            <?php if ($despesasMes > 0): ?>
+                após R$ <?= number_format($despesasMes, 2, ',', '.') ?> de <a href="/pages/Despesas.php">despesas</a>
+            <?php else: ?>
+                <a href="/pages/Despesas.php">nenhuma despesa lançada</a>
+            <?php endif; ?>
         </small>
     </div>
 
@@ -310,6 +397,51 @@ $ultimasVendas = $conn->query("
     </div>
 </div>
 
+
+<!-- COMPARATIVO DOS ÚLTIMOS MESES -->
+<div class="card" style="margin-top:25px;">
+    <div class="grafico-topo">
+        <h3>📆 Últimos meses</h3>
+        <a href="/pages/Relatorios.php" class="ver-todas">Ver relatórios</a>
+    </div>
+
+    <table class="tabela-comparativo">
+        <thead>
+            <tr>
+                <th>Mês</th>
+                <th>Faturamento</th>
+                <th>Lucro das vendas</th>
+                <th>Despesas</th>
+                <th>Resultado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($comparativo as $m): ?>
+                <tr class="<?= $m['atual'] ? 'mes-atual' : '' ?>">
+                    <td>
+                        <?= htmlspecialchars($m['rotulo']) ?>
+                        <small style="color: var(--text-gray);">/<?= htmlspecialchars($m['ano']) ?></small>
+                    </td>
+
+                    <td>
+                        R$ <?= number_format($m['faturamento'], 2, ',', '.') ?>
+                        <?php /* Barra proporcional: compara os meses de relance */ ?>
+                        <span class="barra-mes">
+                            <span style="width: <?= round(($m['faturamento'] / $maiorFaturamentoMes) * 100) ?>%"></span>
+                        </span>
+                    </td>
+
+                    <td>R$ <?= number_format($m['lucro'], 2, ',', '.') ?></td>
+                    <td>R$ <?= number_format($m['despesas'], 2, ',', '.') ?></td>
+
+                    <td class="<?= $m['resultado'] < 0 ? 'margem-negativa' : '' ?>">
+                        <strong>R$ <?= number_format($m['resultado'], 2, ',', '.') ?></strong>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
 
 <!-- RUPTURA DE ESTOQUE E ÚLTIMAS VENDAS -->
 <div class="painel-duplo">

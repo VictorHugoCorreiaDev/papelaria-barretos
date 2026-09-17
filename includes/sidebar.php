@@ -17,6 +17,8 @@ $rotaAtiva = [
     '/pages/ExcluirProdutos.php' => '/pages/Estoque.php',
     '/pages/CancelarVenda.php'   => '/pages/ListarVendas.php',
     '/pages/ExcluirDespesa.php'  => '/pages/Despesas.php',
+    '/pages/EditarDespesa.php'   => '/pages/Despesas.php',
+    '/pages/Backup.php'          => '/pages/Configuracoes.php',
 ][$rotaAtual] ?? $rotaAtual;
 
 $itensMenu = [
@@ -26,7 +28,9 @@ $itensMenu = [
     '/pages/Estoque.php'           => 'Estoque',
     '/pages/ListarVendas.php'      => 'Vendas',
     '/pages/Despesas.php'          => 'Despesas',
+    '/pages/FechamentoCaixa.php'   => 'Fechamento de Caixa',
     '/pages/Relatorios.php'        => 'Relatórios',
+    '/pages/Configuracoes.php'     => 'Configurações',
 ];
 ?>
 <div class="layout">
