@@ -120,6 +120,12 @@ A hospedagem responde CSS e JS com `Cache-Control: max-age=2592000` — trinta d
 
 **Não remova o parâmetro de versão.** E, ao investigar um "não atualizou em produção", verifique o que o navegador está usando, não só o arquivo no servidor: o arquivo publicado pode estar correto enquanto o navegador exibe a versão guardada.
 
+## Busca de produto nas telas de venda
+
+O `ativarBuscaProduto()` do `funcoes.js` liga um campo de texto a um `<select>` e filtra as opções conforme se digita, já selecionando a primeira. É usado no modal do dashboard (`buscaProdutoRapida` → `produto`) e no carrinho (`buscaProdutoCarrinho` → `produtoCarrinho`).
+
+O `<select>` continua sendo o campo enviado no formulário: o `atualizarValores()` lê `data-preco` e `data-estoque` da opção escolhida, e o elemento nativo funciona por teclado sem trabalho extra. O filtro guarda uma cópia de todas as opções ao iniciar, porque remove e recria os `<option>` a cada busca — esconder com `display:none` não funciona em todos os navegadores. A comparação ignora acentos, então "lapis" encontra "Lápis".
+
 ## Carregamento do JavaScript
 
 O `footer.php` é o único lugar que carrega o `funcoes.js`, e toda página o inclui ao final. Não acrescente uma tag `<script>` própria: o arquivo registra o listener de submit do `#formVenda` no escopo global, então um segundo carregamento faria a venda rápida ser enviada duas vezes.

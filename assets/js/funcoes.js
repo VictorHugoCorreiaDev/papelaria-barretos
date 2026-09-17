@@ -64,6 +64,13 @@ produtoSelect?.addEventListener('change', atualizarValores);
 quantidadeInput?.addEventListener('input', atualizarValores);
 window.addEventListener('load', atualizarValores);
 
+// Busca de produto nas duas telas de venda; cada uma tem seus próprios ids
+// e a função ignora em silêncio a que não existir na página atual
+window.addEventListener('DOMContentLoaded', function () {
+    ativarBuscaProduto('buscaProdutoRapida', 'produto', 'contadorProdutosRapida');
+    ativarBuscaProduto('buscaProdutoCarrinho', 'produtoCarrinho', 'contadorProdutosCarrinho');
+});
+
 const form = document.getElementById('formVenda');
 
 form?.addEventListener('submit', function (e) {
@@ -171,6 +178,91 @@ function sessaoExpirada() {
 
 function fecharModal() {
     document.getElementById("modalItens").style.display = "none";
+}
+
+// ===== Busca de produto nos selects de venda =====
+
+/*
+ * Com mais de cem produtos cadastrados, achar um item no <select> exige
+ * rolar a lista inteira a cada venda. O campo de busca filtra as opções
+ * enquanto se digita e já deixa a primeira selecionada, para o caso comum
+ * de o primeiro resultado ser o certo.
+ *
+ * O <select> continua existindo porque o resto do JS depende dele (o
+ * atualizarValores lê data-preco e data-estoque da opção escolhida) e
+ * porque ele funciona por teclado sem nenhum trabalho extra.
+ */
+
+// "lápis" e "lapis" precisam encontrar o mesmo produto
+function semAcento(texto) {
+    return texto
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase();
+}
+
+function ativarBuscaProduto(idCampo, idSelect, idContador) {
+    const campo = document.getElementById(idCampo);
+    const select = document.getElementById(idSelect);
+    const contador = idContador ? document.getElementById(idContador) : null;
+
+    if (!campo || !select) return;
+
+    // Guarda a lista completa: o filtro remove opções do select, então sem
+    // essa cópia não haveria como trazer de volta ao apagar a busca
+    const todasOpcoes = [...select.options].map(o => o.cloneNode(true));
+
+    // Um "Selecione" sem valor, quando existe, fica fixo no topo
+    const temPlaceholder = todasOpcoes.length > 0 && todasOpcoes[0].value === '';
+    const placeholder = temPlaceholder ? todasOpcoes[0] : null;
+    const produtos = temPlaceholder ? todasOpcoes.slice(1) : todasOpcoes;
+
+    function filtrar() {
+        const termo = semAcento(campo.value.trim());
+
+        const encontrados = termo === ''
+            ? produtos
+            : produtos.filter(o => semAcento(o.textContent).includes(termo));
+
+        select.innerHTML = '';
+
+        if (placeholder) {
+            select.appendChild(placeholder.cloneNode(true));
+        }
+
+        encontrados.forEach(o => select.appendChild(o.cloneNode(true)));
+
+        // Com um resultado só, ou com busca em andamento, já seleciona o
+        // primeiro produto para o valor unitário aparecer sem mais cliques
+        if (termo !== '' && encontrados.length > 0) {
+            select.selectedIndex = placeholder ? 1 : 0;
+        }
+
+        if (contador) {
+            if (termo === '') {
+                contador.textContent = produtos.length + ' produto(s)';
+            } else if (encontrados.length === 0) {
+                contador.textContent = 'Nenhum produto encontrado';
+            } else {
+                contador.textContent = encontrados.length + ' de ' + produtos.length + ' produto(s)';
+            }
+        }
+
+        // Avisa quem depende da seleção (valor unitário, total, botão)
+        select.dispatchEvent(new Event('change'));
+    }
+
+    campo.addEventListener('input', filtrar);
+
+    // Enter no campo de busca vai para a quantidade, não envia o formulário
+    campo.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+
+        e.preventDefault();
+        document.getElementById('quantidade')?.focus();
+    });
+
+    filtrar();
 }
 
 // ===== Venda rápida em modal (dashboard) =====

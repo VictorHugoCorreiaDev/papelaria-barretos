@@ -386,6 +386,10 @@ $ultimasVendas = $conn->query("
 
             <div class="form-group">
                 <label>Selecione um Produto</label>
+
+                <input type="text" id="buscaProdutoRapida" class="input busca-produto"
+                    placeholder="🔎 Digite para filtrar..." autocomplete="off">
+
                 <select name="produto_id" id="produto" class="input">
                     <?php
                     $produtos = $conn->query("SELECT id, nome, preco, quantidade FROM produtos");
@@ -399,6 +403,8 @@ $ultimasVendas = $conn->query("
                         </option>
                     <?php endforeach; ?>
                 </select>
+
+                <small class="contador-produtos" id="contadorProdutosRapida"></small>
             </div>
 
             <div class="info-linha">

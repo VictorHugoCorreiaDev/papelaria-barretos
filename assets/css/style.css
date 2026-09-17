@@ -1534,3 +1534,16 @@ body.login-page::after {
     color: var(--danger);
     font-weight: 600;
 }
+
+/* BUSCA DE PRODUTO NAS TELAS DE VENDA */
+
+.busca-produto {
+    margin-bottom: 8px;
+}
+
+.contador-produtos {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-gray);
+}

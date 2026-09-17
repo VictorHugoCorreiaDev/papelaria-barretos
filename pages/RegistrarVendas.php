@@ -229,19 +229,26 @@ require_once __DIR__ . '/../includes/header.php';
 
         <div class="form-group">
             <label>Produto</label>
-            <select name="produto_id" required>
+
+            <input type="text" id="buscaProdutoCarrinho" class="busca-produto"
+                placeholder="🔎 Digite para filtrar..." autocomplete="off">
+
+            <select name="produto_id" id="produtoCarrinho" required>
                 <option value="">Selecione</option>
                 <?php foreach ($produtos as $p): ?>
-                    <option value="<?= (int) $p['id'] ?>">
+                    <option value="<?= (int) $p['id'] ?>"
+                        data-estoque="<?= (int) $p['quantidade'] ?>">
                         <?= htmlspecialchars($p['nome']) ?> (Estoque: <?= (int) $p['quantidade'] ?>)
                     </option>
                 <?php endforeach; ?>
             </select>
+
+            <small class="contador-produtos" id="contadorProdutosCarrinho"></small>
         </div>
 
         <div class="form-group">
             <label>Quantidade</label>
-            <input type="number" name="quantidade" min="1" required>
+            <input type="number" id="quantidade" name="quantidade" min="1" required>
         </div>
 
         <button type="submit" name="adicionar" class="btn btn-primary">
