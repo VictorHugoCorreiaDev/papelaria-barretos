@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/validacao.php';
+require_once __DIR__ . '/../includes/pagamento.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 require_once __DIR__ . '/../includes/header.php';
@@ -55,6 +56,48 @@ $custo = (float) $stmtCusto->fetchColumn();
 $lucro = $faturamento - $custo;
 $margem = $faturamento > 0 ? ($lucro / $faturamento) * 100 : 0;
 $ticketMedio = $totalVendas > 0 ? $faturamento / $totalVendas : 0;
+
+/*
+ * ENTRADAS POR FORMA DE PAGAMENTO
+ *
+ * Mesmo recorte do resumo. Vendas anteriores ao registro da forma de
+ * pagamento têm o campo vazio e caem em "Não informada" pelo
+ * nomeFormaPagamento().
+ */
+$stmtPagamentos = $conn->prepare("
+    SELECT forma_pagamento, COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS valor
+    FROM vendas
+    WHERE status = 'ativa'
+      AND DATE(created_at) BETWEEN :inicio AND :fim
+    GROUP BY forma_pagamento
+    ORDER BY valor DESC
+");
+$stmtPagamentos->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
+$pagamentos = $stmtPagamentos->fetchAll(PDO::FETCH_ASSOC);
+
+/*
+ * PRODUTOS MAIS VENDIDOS
+ *
+ * Ordena por unidades saídas, não por faturamento: para reposição o que
+ * importa é o giro. O faturamento e o lucro de cada item aparecem ao lado
+ * para dar o contexto.
+ */
+$stmtRanking = $conn->prepare("
+    SELECT p.nome,
+           SUM(vp.quantidade) AS unidades,
+           SUM(vp.quantidade * vp.preco_unitario) AS faturado,
+           SUM(vp.quantidade * (vp.preco_unitario - vp.custo_unitario)) AS lucrado
+    FROM vendas_produtos vp
+    JOIN vendas v ON v.id = vp.venda_id
+    JOIN produtos p ON p.id = vp.produto_id
+    WHERE v.status = 'ativa'
+      AND DATE(v.created_at) BETWEEN :inicio AND :fim
+    GROUP BY vp.produto_id, p.nome
+    ORDER BY unidades DESC, faturado DESC
+    LIMIT 10
+");
+$stmtRanking->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
+$maisVendidos = $stmtRanking->fetchAll(PDO::FETCH_ASSOC);
 
 /*PAGINAÇÃO */
 
@@ -185,6 +228,58 @@ if ($totalRegistros > 0) {
 <p class="periodo-atual" style="margin-top:15px;">
     Os indicadores consideram apenas vendas <strong>ativas</strong>; a tabela abaixo lista também as canceladas do período.
 </p>
+
+<!-- FORMAS DE PAGAMENTO E PRODUTOS MAIS VENDIDOS -->
+<div class="painel-duplo">
+
+    <div class="card">
+        <h3>💳 Entradas por forma de pagamento</h3>
+
+        <?php if (empty($pagamentos)): ?>
+            <p style="color: var(--text-gray);">Nenhuma venda no período.</p>
+        <?php else: ?>
+            <ul class="lista-painel">
+                <?php foreach ($pagamentos as $fp):
+                    // Participação de cada meio no total do período
+                    $fatia = $faturamento > 0 ? ($fp['valor'] / $faturamento) * 100 : 0;
+                ?>
+                    <li>
+                        <span class="lista-nome">
+                            <?= htmlspecialchars(nomeFormaPagamento($fp['forma_pagamento'])) ?>
+                            <small><?= (int) $fp['vendas'] ?> venda(s) · <?= number_format($fatia, 1, ',', '.') ?>% do total</small>
+                        </span>
+                        <strong class="lista-valor">R$ <?= number_format($fp['valor'], 2, ',', '.') ?></strong>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </div>
+
+    <div class="card">
+        <h3>🏆 Produtos mais vendidos</h3>
+
+        <?php if (empty($maisVendidos)): ?>
+            <p style="color: var(--text-gray);">Nenhuma venda no período.</p>
+        <?php else: ?>
+            <ul class="lista-painel">
+                <?php foreach ($maisVendidos as $posicao => $item): ?>
+                    <li>
+                        <span class="lista-hora"><?= $posicao + 1 ?>º</span>
+                        <span class="lista-nome">
+                            <?= htmlspecialchars($item['nome']) ?>
+                            <small>
+                                <?= (int) $item['unidades'] ?> unidade(s) ·
+                                R$ <?= number_format($item['lucrado'], 2, ',', '.') ?> de lucro
+                            </small>
+                        </span>
+                        <strong class="lista-valor">R$ <?= number_format($item['faturado'], 2, ',', '.') ?></strong>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php endif; ?>
+    </div>
+
+</div>
 
 <!-- TABELA -->
 <div class="card" style="margin-top:25px;">

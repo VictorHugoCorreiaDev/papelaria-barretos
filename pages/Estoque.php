@@ -19,6 +19,14 @@ $offset = ($page - 1) * $limit;
  */
 $semCusto = isset($_GET['semcusto']) && $_GET['semcusto'] === '1';
 
+/*
+ * Filtro de estoque negativo: saldo abaixo de zero é sempre erro de
+ * registro — venda lançada com quantidade maior que a disponível, o que a
+ * validação de estoque passou a impedir. Os saldos anteriores a essa
+ * correção continuam errados e precisam de conferência física.
+ */
+$negativo = isset($_GET['negativo']) && $_GET['negativo'] === '1';
+
 $params = [];
 $condicoes = [];
 
@@ -31,10 +39,15 @@ if ($semCusto) {
     $condicoes[] = "custo <= 0";
 }
 
+if ($negativo) {
+    $condicoes[] = "quantidade < 0";
+}
+
 $where = $condicoes ? 'WHERE ' . implode(' AND ', $condicoes) : '';
 
-// Contagem total de produtos sem custo, independente dos filtros da tela
+// Contagens totais, independentes dos filtros aplicados na tela
 $totalSemCusto = (int) $conn->query("SELECT COUNT(*) FROM produtos WHERE custo <= 0")->fetchColumn();
+$totalNegativo = (int) $conn->query("SELECT COUNT(*) FROM produtos WHERE quantidade < 0")->fetchColumn();
 
 /* TOTAL REGISTROS */
 $stmtTotal = $conn->prepare("SELECT COUNT(*) FROM produtos $where");
@@ -79,6 +92,22 @@ if ($totalRegistros > 0) {
 
 <h2>Estoque</h2>
 
+<?php if ($totalNegativo > 0): ?>
+    <div class="aviso-custo aviso-erro">
+        <strong><?= $totalNegativo ?> produto<?= $totalNegativo == 1 ? '' : 's' ?> com estoque negativo.</strong>
+        Saldo abaixo de zero é resto de vendas registradas antes da validação de
+        estoque — o sistema não permite mais que isso aconteça, mas os saldos
+        antigos continuam errados. Confira a quantidade física e corrija pela
+        edição do produto.
+
+        <?php if (!$negativo): ?>
+            <a href="?negativo=1">Ver só esses produtos</a>
+        <?php else: ?>
+            <a href="?">Ver todos os produtos</a>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
 <?php if ($totalSemCusto > 0): ?>
     <div class="aviso-custo">
         <strong><?= $totalSemCusto ?> produto<?= $totalSemCusto == 1 ? '' : 's' ?> sem custo de compra.</strong>
@@ -110,11 +139,15 @@ if ($totalRegistros > 0) {
             <input type="hidden" name="semcusto" value="1">
         <?php endif; ?>
 
+        <?php if ($negativo): ?>
+            <input type="hidden" name="negativo" value="1">
+        <?php endif; ?>
+
         <button type="submit" class="btn btn-secondary">
             Buscar
         </button>
 
-        <?php if ($busca || $semCusto): ?>
+        <?php if ($busca || $semCusto || $negativo): ?>
             <a href="?" class="btn btn-secondary">Limpar filtros</a>
         <?php endif; ?>
     </form>
@@ -208,18 +241,18 @@ if ($totalRegistros > 0) {
         <div class="paginacao">
 
             <?php if ($page > 1): ?>
-                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?>&page=<?= $page - 1 ?>" class="pag-btn">«</a>
+                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?><?= $negativo ? "&negativo=1" : "" ?>&page=<?= $page - 1 ?>" class="pag-btn">«</a>
             <?php endif; ?>
 
             <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?>&page=<?= $i ?>"
+                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?><?= $negativo ? "&negativo=1" : "" ?>&page=<?= $i ?>"
                     class="pag-btn <?= $i == $page ? 'active' : '' ?>">
                     <?= $i ?>
                 </a>
             <?php endfor; ?>
 
             <?php if ($page < $totalPaginas): ?>
-                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?>&page=<?= $page + 1 ?>" class="pag-btn">»</a>
+                <a href="?busca=<?= urlencode($busca) ?><?= $semCusto ? "&semcusto=1" : "" ?><?= $negativo ? "&negativo=1" : "" ?>&page=<?= $page + 1 ?>" class="pag-btn">»</a>
             <?php endif; ?>
 
         </div>
