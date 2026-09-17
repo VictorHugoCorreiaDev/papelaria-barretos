@@ -1558,3 +1558,35 @@ body.login-page::after {
 .aviso-custo.aviso-erro a {
     color: #8a1f1f;
 }
+
+/* DESCONTO NA FINALIZAÇÃO DA VENDA */
+
+.desconto-linha {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.desconto-linha input {
+    max-width: 130px;
+}
+
+.desconto-prefixo {
+    color: var(--text-gray);
+    font-size: 14px;
+}
+
+.desconto-resumo {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.venda-desconto {
+    display: block;
+    font-size: 11px;
+    color: var(--danger);
+}

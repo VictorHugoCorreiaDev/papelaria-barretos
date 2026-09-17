@@ -125,18 +125,29 @@ if (isset($_POST['finalizar'])) {
         try {
             $conn->beginTransaction();
 
-            $totalVenda = 0;
+            $subtotal = 0;
 
             foreach ($_SESSION['carrinho'] as $item) {
-                $totalVenda += $item['preco'] * $item['quantidade'];
+                $subtotal += $item['preco'] * $item['quantidade'];
             }
+
+            /*
+             * O desconto vem do formulário em reais — o campo de percentual
+             * é só uma comodidade do navegador, que converte para reais
+             * antes de enviar. Recalcular aqui a partir do subtotal impede
+             * que um valor montado fora da tela zere ou inverta a venda.
+             */
+            $desconto = valorMonetario($_POST['desconto'] ?? 0) ?? 0;
+            $desconto = min($desconto, $subtotal);
+
+            $totalVenda = $subtotal - $desconto;
 
             // Criar venda
             $cliente = trim($_POST['cliente'] ?? '');
             $formaPagamento = formaPagamentoValida($_POST['forma_pagamento'] ?? '');
 
-            $stmt = $conn->prepare("INSERT INTO vendas (total, cliente, forma_pagamento) VALUES (?, ?, ?)");
-            $stmt->execute([$totalVenda, $cliente, $formaPagamento]);
+            $stmt = $conn->prepare("INSERT INTO vendas (total, desconto, cliente, forma_pagamento) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$totalVenda, $desconto, $cliente, $formaPagamento]);
 
             $venda_id = $conn->lastInsertId();
 
@@ -320,6 +331,29 @@ require_once __DIR__ . '/../includes/header.php';
                         <option value="<?= htmlspecialchars($chave) ?>"><?= htmlspecialchars($rotulo) ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+
+            <!--
+              Os dois campos de desconto são espelhos: preencher um calcula o
+              outro. Só o valor em reais é enviado; o percentual existe porque
+              é assim que boa parte da negociação acontece no balcão.
+              O subtotal vai no data- para o JS não precisar ler texto formatado.
+            -->
+            <div class="form-group desconto-campos" data-subtotal="<?= $total ?>">
+                <label>Desconto <small style="color: var(--text-gray);">(opcional)</small></label>
+
+                <div class="desconto-linha">
+                    <span class="desconto-prefixo">R$</span>
+                    <input type="number" step="0.01" min="0" max="<?= $total ?>"
+                        name="desconto" id="descontoValor" placeholder="0,00">
+
+                    <span class="desconto-prefixo">ou</span>
+                    <input type="number" step="0.1" min="0" max="100"
+                        id="descontoPercentual" placeholder="0">
+                    <span class="desconto-prefixo">%</span>
+                </div>
+
+                <small class="desconto-resumo" id="descontoResumo"></small>
             </div>
 
             <button type="submit" name="finalizar" class="btn btn-success">

@@ -69,6 +69,7 @@ window.addEventListener('load', atualizarValores);
 window.addEventListener('DOMContentLoaded', function () {
     ativarBuscaProduto('buscaProdutoRapida', 'produto', 'contadorProdutosRapida');
     ativarBuscaProduto('buscaProdutoCarrinho', 'produtoCarrinho', 'contadorProdutosCarrinho');
+    ativarDesconto();
 });
 
 const form = document.getElementById('formVenda');
@@ -263,6 +264,72 @@ function ativarBuscaProduto(idCampo, idSelect, idContador) {
     });
 
     filtrar();
+}
+
+// ===== Desconto na finalização da venda =====
+
+/*
+ * Os campos de reais e de percentual são duas formas de dizer a mesma
+ * coisa: preencher um recalcula o outro. Só o campo em reais tem `name`,
+ * então é o único que vai para o servidor — que por sua vez recalcula o
+ * total a partir do subtotal, sem confiar no que veio do navegador.
+ */
+function ativarDesconto() {
+    const bloco = document.querySelector('.desconto-campos');
+    if (!bloco) return;
+
+    const subtotal = parseFloat(bloco.dataset.subtotal) || 0;
+    const campoValor = document.getElementById('descontoValor');
+    const campoPercentual = document.getElementById('descontoPercentual');
+    const resumo = document.getElementById('descontoResumo');
+
+    if (!campoValor || !campoPercentual) return;
+
+    const formatoBRL = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
+
+    function mostrarResumo(desconto) {
+        if (!resumo) return;
+
+        if (desconto <= 0) {
+            resumo.textContent = '';
+            return;
+        }
+
+        resumo.textContent = 'Total a pagar: ' + formatoBRL.format(subtotal - desconto);
+    }
+
+    campoValor.addEventListener('input', function () {
+        let valor = parseFloat(campoValor.value) || 0;
+
+        // Desconto maior que a venda deixaria o total negativo
+        if (valor > subtotal) {
+            valor = subtotal;
+            campoValor.value = valor.toFixed(2);
+        }
+
+        campoPercentual.value = subtotal > 0 && valor > 0
+            ? ((valor / subtotal) * 100).toFixed(1)
+            : '';
+
+        mostrarResumo(valor);
+    });
+
+    campoPercentual.addEventListener('input', function () {
+        let percentual = parseFloat(campoPercentual.value) || 0;
+
+        if (percentual > 100) {
+            percentual = 100;
+            campoPercentual.value = '100';
+        }
+
+        const valor = subtotal * (percentual / 100);
+
+        campoValor.value = valor > 0 ? valor.toFixed(2) : '';
+        mostrarResumo(valor);
+    });
 }
 
 // ===== Venda rápida em modal (dashboard) =====

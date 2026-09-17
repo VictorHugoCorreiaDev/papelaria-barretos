@@ -53,6 +53,16 @@ $stmtCusto = $conn->prepare("
 $stmtCusto->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
 $custo = (float) $stmtCusto->fetchColumn();
 
+/* Descontos concedidos no período, para o card de faturamento dar contexto */
+$stmtDesconto = $conn->prepare("
+    SELECT COALESCE(SUM(desconto), 0)
+    FROM vendas
+    WHERE status = 'ativa'
+      AND DATE(created_at) BETWEEN :inicio AND :fim
+");
+$stmtDesconto->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
+$descontos = (float) $stmtDesconto->fetchColumn();
+
 $lucro = $faturamento - $custo;
 $margem = $faturamento > 0 ? ($lucro / $faturamento) * 100 : 0;
 $ticketMedio = $totalVendas > 0 ? $faturamento / $totalVendas : 0;
@@ -214,7 +224,12 @@ if ($totalRegistros > 0) {
     <div class="card indicador">
         <h3>💰 Faturamento</h3>
         <span>R$ <?= number_format($faturamento, 2, ',', '.') ?></span>
-        <small class="comparativo">custo de R$ <?= number_format($custo, 2, ',', '.') ?></small>
+        <small class="comparativo">
+            custo de R$ <?= number_format($custo, 2, ',', '.') ?>
+            <?php if ($descontos > 0): ?>
+                · R$ <?= number_format($descontos, 2, ',', '.') ?> em descontos
+            <?php endif; ?>
+        </small>
     </div>
 
     <div class="card indicador">

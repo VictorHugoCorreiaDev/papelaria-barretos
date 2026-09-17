@@ -28,7 +28,7 @@ Não há arquivo `.sql` de schema, mas o `README.md` traz o DDL das quatro tabel
 
 - `usuarios(usuario, senha)` — `senha` é um hash bcrypt de `password_hash()`, verificado em `login.php`. Não existe tela de cadastro; usuários precisam ser inseridos manualmente.
 - `produtos(id, nome, preco, custo, quantidade, created_at)` — `quantidade` é o estoque corrente; `custo` é o preço de compra, usado para o lucro no dashboard; `created_at` existe na tabela mas nenhuma tela usa.
-- `vendas(id, total, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas.
+- `vendas(id, total, desconto, cliente, forma_pagamento, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas. **`total` é o valor líquido**, o que de fato entrou no caixa: é ele que alimenta faturamento e lucro em todas as telas. O `desconto` fica registrado à parte, para consulta; o valor bruto, quando precisar, é `total + desconto`.
 - `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario, custo_unitario)` — congelam preço e custo no momento da venda, de modo que totais e lucros históricos sobrevivem a alterações de preço ou de custo.
 
 ## Estrutura das páginas
@@ -119,6 +119,12 @@ O lucro vem de `SUM(quantidade * custo_unitario)` na `vendas_produtos`, não de 
 A hospedagem responde CSS e JS com `Cache-Control: max-age=2592000` — trinta dias. Por isso o `header.php` e o `footer.php` acrescentam `?v=<filemtime>` às tags: sem esse parâmetro, uma alteração de estilo ou script só chega ao navegador depois do prazo ou de um Ctrl+Shift+R, e a página nova aparece com a folha antiga (layout quebrado, funções JS ausentes).
 
 **Não remova o parâmetro de versão.** E, ao investigar um "não atualizou em produção", verifique o que o navegador está usando, não só o arquivo no servidor: o arquivo publicado pode estar correto enquanto o navegador exibe a versão guardada.
+
+## Desconto na venda
+
+O desconto é único, sobre o total, aplicado na finalização do carrinho (a venda rápida não tem). Os dois campos da tela — reais e percentual — são espelhos ligados pelo `ativarDesconto()` do `funcoes.js`; só o de reais tem `name`, então é o único enviado.
+
+O servidor **recalcula o total a partir do subtotal do carrinho** e limita o desconto a esse subtotal, em vez de confiar no valor recebido: sem isso, um POST montado fora da tela deixaria o total negativo ou inverteria a venda. Valor negativo cai para zero pelo `valorMonetario()`.
 
 ## Busca de produto nas telas de venda
 

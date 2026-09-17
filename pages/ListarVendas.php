@@ -79,7 +79,7 @@ if (!empty($dias)) {
     $marcadores = implode(',', array_fill(0, count($dias), '?'));
 
     $sqlVendas = "
-        SELECT v.id, v.total, v.cliente, v.forma_pagamento, v.created_at, v.status,
+        SELECT v.id, v.total, v.desconto, v.cliente, v.forma_pagamento, v.created_at, v.status,
                DATE(v.created_at) AS dia
         FROM vendas v
         WHERE DATE(v.created_at) IN ($marcadores)
@@ -270,6 +270,12 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
 
                         <span class="venda-pagamento">
                             <?= htmlspecialchars(nomeFormaPagamento($v['forma_pagamento'])) ?>
+                            <?php if ($v['desconto'] > 0): ?>
+                                <!-- O total já é líquido; o desconto aparece como contexto -->
+                                <small class="venda-desconto">
+                                    −R$ <?= number_format($v['desconto'], 2, ',', '.') ?>
+                                </small>
+                            <?php endif; ?>
                         </span>
 
                         <span class="venda-itens">
