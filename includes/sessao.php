@@ -30,16 +30,22 @@ function marcarSessao($hashSenha)
 
 /**
  * true se o usuário da sessão ainda existe e a senha não mudou.
+ *
+ * Aproveita a mesma consulta para renovar o perfil na sessão: mudar o
+ * perfil de alguém vale no próximo clique, sem pedir novo login.
  */
 function sessaoContinuaValida(PDO $conn)
 {
-    $stmt = $conn->prepare("SELECT senha FROM usuarios WHERE usuario = ?");
+    $stmt = $conn->prepare("SELECT senha, perfil FROM usuarios WHERE usuario = ?");
     $stmt->execute([$_SESSION['usuario'] ?? '']);
-    $hash = $stmt->fetchColumn();
+    $linha = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($hash === false) {
+    if ($linha === false) {
         return false;
     }
+
+    $hash = $linha['senha'];
+    $_SESSION['perfil'] = $linha['perfil'];
 
     // Sessões abertas antes desta verificação existir não têm a marca:
     // recebem a atual, em vez de derrubar quem já estava trabalhando

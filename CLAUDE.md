@@ -26,7 +26,7 @@ Não há linter, executor de testes nem gerenciador de dependências. A verifica
 
 Não há arquivo `.sql` de schema, mas o `README.md` traz o DDL das quatro tabelas. As tabelas que o código pressupõe:
 
-- `usuarios(usuario, senha)` — `senha` é um hash bcrypt de `password_hash()`, verificado em `login.php`. Usuários são criados, excluídos e têm a senha trocada em `pages/Usuarios.php` (Configurações → Usuários).
+- `usuarios(id, usuario, senha, perfil)` — `perfil` é `'admin'` ou `'vendedor'` (migração `008`; os usuários anteriores viraram admin pelo DEFAULT). `senha` é um hash bcrypt de `password_hash()`, verificado em `login.php`. Usuários são criados, excluídos e têm a senha trocada em `pages/Usuarios.php` (Configurações → Usuários).
 - `produtos(id, nome, preco, custo, quantidade, created_at)` — `quantidade` é o estoque corrente; `custo` é o preço de compra, usado para o lucro no dashboard; `created_at` existe na tabela mas nenhuma tela usa.
 - `vendas(id, total, desconto, cliente, forma_pagamento, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas. **`total` é o valor líquido**, o que de fato entrou no caixa: é ele que alimenta faturamento e lucro em todas as telas. O `desconto` fica registrado à parte, para consulta; o valor bruto, quando precisar, é `total + desconto`.
 - `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario, custo_unitario)` — congelam preço e custo no momento da venda, de modo que totais e lucros históricos sobrevivem a alterações de preço ou de custo.
@@ -90,7 +90,16 @@ Não há cadastro na tela de login, de propósito: o site é público, e cadastr
 - Trocar a própria senha pede a atual. Redefinir a de outra pessoa (quando ela esquece) não pede, mas não vale para a própria.
 - Ninguém exclui o próprio usuário, e o sistema nunca fica com zero usuários.
 
-Não há níveis de acesso: todo usuário vê tudo, e a tela avisa isso.
+## Perfis de acesso
+
+`includes/permissoes.php` define dois perfis. O **admin** vê e faz tudo. O **vendedor** registra vendas (carrinho e venda rápida, com desconto), consulta o estoque e a lista de vendas e imprime comprovantes. Ele não vê custo, margem nem lucro em nenhuma tela, não cancela venda, não mexe em produto nem em estoque, e não abre despesas, fechamento, relatórios, configurações e usuários. **Cancelar venda é só do admin**: vender, receber em dinheiro e cancelar depois é o desvio mais comum no balcão.
+
+- A liberação é por **lista de rotas permitidas** (`rotasDoVendedor()`), conferida no `auth.php` e no `auth_ajax.php` pelo `SCRIPT_NAME`. Tela nova nasce restrita ao admin; para liberar ao vendedor, acrescente a rota ali de propósito. Página bloqueada volta ao dashboard com toast; AJAX bloqueado responde 403.
+- O menu (`sidebar.php`) filtra os itens pelo mesmo `podeAcessar()`, então o que aparece e o que abre nunca divergem.
+- Dentro das telas liberadas, o que é do admin fica atrás de `ehAdmin()`: cards do mês, lucro, resultado, gráfico e comparativo no dashboard; custo, margem, avisos e ações no estoque; lucro do dia e botão de cancelar na lista de vendas.
+- **Esconder na tela não basta quando o dado vai no JSON.** O `ajax_venda_rapida.php` manda ao vendedor só `vendasHoje` e `receitaHoje`, e o `atualizarCards()` escreve apenas os campos que vieram (antes, `margemMes.toFixed()` sem o campo quebrava o script).
+- O perfil é relido do banco a cada acesso junto com a validação da sessão: promover ou rebaixar alguém vale no próximo clique, sem novo login.
+- Na tela de Usuários, o perfil é escolhido ao criar (Vendedor vem primeiro, por ser o de menor acesso) e trocado pelo botão "Tornar …". Ninguém muda o próprio perfil, e o sistema nunca fica sem admin.
 
 ## Limite de tentativas no login
 

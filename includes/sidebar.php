@@ -35,6 +35,9 @@ $itensMenu = [
     '/pages/Relatorios.php'        => 'Relatórios',
     '/pages/Configuracoes.php'     => 'Configurações',
 ];
+
+// Cada perfil vê só o que pode abrir (includes/permissoes.php, carregado pelo auth.php)
+$itensMenu = array_filter($itensMenu, 'podeAcessar', ARRAY_FILTER_USE_KEY);
 ?>
 <div class="layout">
     <!--

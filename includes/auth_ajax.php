@@ -37,3 +37,12 @@ if (!sessaoContinuaValida($conn)) {
     echo json_encode(['status' => 'erro', 'mensagem' => 'Sessão expirada. Faça login novamente.']);
     exit;
 }
+
+require_once __DIR__ . '/permissoes.php';
+
+if (!podeAcessar($_SERVER['SCRIPT_NAME'] ?? '')) {
+    http_response_code(403);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['status' => 'erro', 'mensagem' => 'Seu perfil não tem acesso a esta ação.']);
+    exit;
+}

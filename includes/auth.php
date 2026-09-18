@@ -29,3 +29,12 @@ if (!sessaoContinuaValida($conn)) {
     header('Location: /login.php');
     exit;
 }
+
+// Tela fora do perfil (includes/permissoes.php): volta ao início com aviso
+require_once __DIR__ . '/permissoes.php';
+
+if (!podeAcessar($_SERVER['SCRIPT_NAME'] ?? '')) {
+    $_SESSION['toast'] = ['type' => 'error', 'message' => 'Seu perfil não tem acesso a essa tela.'];
+    header('Location: /dashboard.php');
+    exit;
+}

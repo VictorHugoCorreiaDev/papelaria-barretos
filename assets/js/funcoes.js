@@ -85,13 +85,17 @@ function atualizarCards(cards) {
         if (el) el.textContent = valor;
     };
 
-    escreve('cardVendasMes', cards.vendasMes);
-    escreve('cardFaturamentoMes', formatoBRL.format(cards.faturamentoMes));
-    escreve('cardLucroMes', formatoBRL.format(cards.lucroMes));
-    escreve('cardMargemMes', cards.margemMes.toFixed(1).replace('.', ','));
-    escreve('cardTicketMedioMes', formatoBRL.format(cards.ticketMedioMes).replace('R$', '').trim());
-    escreve('cardReceitaHoje', formatoBRL.format(cards.receitaHoje));
-    escreve('cardVendasHoje', cards.vendasHoje);
+    // Cada campo só é escrito se veio na resposta: para o vendedor o
+    // servidor manda apenas os números de hoje (includes/permissoes.php)
+    const veio = campo => typeof cards[campo] === 'number';
+
+    if (veio('vendasMes')) escreve('cardVendasMes', cards.vendasMes);
+    if (veio('faturamentoMes')) escreve('cardFaturamentoMes', formatoBRL.format(cards.faturamentoMes));
+    if (veio('lucroMes')) escreve('cardLucroMes', formatoBRL.format(cards.lucroMes));
+    if (veio('margemMes')) escreve('cardMargemMes', cards.margemMes.toFixed(1).replace('.', ','));
+    if (veio('ticketMedioMes')) escreve('cardTicketMedioMes', formatoBRL.format(cards.ticketMedioMes).replace('R$', '').trim());
+    if (veio('receitaHoje')) escreve('cardReceitaHoje', formatoBRL.format(cards.receitaHoje));
+    if (veio('vendasHoje')) escreve('cardVendasHoje', cards.vendasHoje);
 }
 
 produtoSelect?.addEventListener('change', atualizarValores);

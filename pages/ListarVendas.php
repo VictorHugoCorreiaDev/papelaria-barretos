@@ -386,7 +386,9 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
                     <?php if ($grupo['quantidadeAtivas'] > 0): ?>
                         <?= $grupo['quantidadeAtivas'] ?> venda<?= $grupo['quantidadeAtivas'] == 1 ? '' : 's' ?>
                         · R$ <?= number_format($grupo['faturamento'], 2, ',', '.') ?>
-                        · <span class="dia-lucro">R$ <?= number_format($grupo['lucro'], 2, ',', '.') ?> de lucro</span>
+                        <?php if (ehAdmin()): ?>
+                            · <span class="dia-lucro">R$ <?= number_format($grupo['lucro'], 2, ',', '.') ?> de lucro</span>
+                        <?php endif; ?>
                     <?php endif; ?>
 
                     <?php
@@ -458,7 +460,7 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
                                 Comprovante
                             </a>
 
-                            <?php if ($v['status'] === 'ativa'): ?>
+                            <?php if ($v['status'] === 'ativa' && ehAdmin()): ?>
                                 <form method="POST" action="CancelarVenda.php" class="form-inline"
                                     onsubmit="return confirm('Tem certeza que deseja cancelar esta venda?')">
                                     <?= campoCsrf() ?>

@@ -2065,3 +2065,9 @@ body.login-page::after {
     margin-top: 25px;
     align-items: start;
 }
+
+/* Perfil ao lado do nome, no cabeçalho */
+.perfil-rotulo {
+    font-size: 12px;
+    color: var(--text-gray);
+}

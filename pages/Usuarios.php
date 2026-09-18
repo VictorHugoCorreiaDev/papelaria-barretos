@@ -40,6 +40,13 @@ function nomeUsuarioValido($nome)
     return preg_match('/^[a-z0-9._-]{3,50}$/', $nome) === 1;
 }
 
+// O sistema nunca pode ficar sem administrador: ninguém mais conseguiria
+// criar usuários, ver o financeiro ou desfazer o erro
+function totalAdmins(PDO $conn)
+{
+    return (int) $conn->query("SELECT COUNT(*) FROM usuarios WHERE perfil = 'admin'")->fetchColumn();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     exigirCsrf($voltar);
@@ -71,9 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             voltarCom('error', $problemaSenha);
         }
 
+        $perfil = perfilValido($_POST['perfil'] ?? null);
+        if ($perfil === null) {
+            voltarCom('error', 'Escolha o perfil do usuário.');
+        }
+
         try {
-            $conn->prepare("INSERT INTO usuarios (usuario, senha) VALUES (?, ?)")
-                ->execute([$nome, password_hash($senha, PASSWORD_DEFAULT)]);
+            $conn->prepare("INSERT INTO usuarios (usuario, senha, perfil) VALUES (?, ?, ?)")
+                ->execute([$nome, password_hash($senha, PASSWORD_DEFAULT), $perfil]);
         } catch (PDOException $e) {
             // 23000: violação do índice único de usuario
             if ($e->getCode() === '23000') {
@@ -82,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw $e;
         }
 
-        voltarCom('success', "Usuário \"$nome\" criado. Passe a senha para a pessoa por um canal seguro.");
+        voltarCom('success', "Usuário \"$nome\" criado como " . nomePerfil($perfil) . ". Passe a senha para a pessoa por um canal seguro.");
     }
 
     /* TROCAR A PRÓPRIA SENHA — pede a atual, como qualquer sistema */
@@ -150,10 +162,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             voltarCom('error', 'Você não pode excluir o próprio usuário.');
         }
 
-        // Com só o próprio usuário protegido, esta checagem nunca dispara
-        // hoje; fica como garantia de nunca zerar os acessos ao sistema
-        if ((int) $conn->query("SELECT COUNT(*) FROM usuarios")->fetchColumn() <= 1) {
-            voltarCom('error', 'O sistema precisa de pelo menos um usuário.');
+        // Quem está nesta tela é admin e não pode se excluir, então sempre
+        // sobra um; a checagem fica como garantia se essa regra mudar
+        $stmtPerfil = $conn->prepare("SELECT perfil FROM usuarios WHERE id = ?");
+        $stmtPerfil->execute([$id]);
+        if ($stmtPerfil->fetchColumn() === 'admin' && totalAdmins($conn) <= 1) {
+            voltarCom('error', 'O sistema precisa de pelo menos um administrador.');
         }
 
         $conn->prepare("DELETE FROM usuarios WHERE id = ?")->execute([$id]);
@@ -161,10 +175,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         voltarCom('success', "Usuário \"$alvo\" excluído. Se estava conectado, perdeu o acesso na hora.");
     }
 
+    /* MUDAR O PERFIL — vale no próximo clique da pessoa, sem novo login */
+    if ($acao === 'perfil') {
+        $id = (int) ($_POST['id'] ?? 0);
+        $perfil = perfilValido($_POST['perfil'] ?? null);
+
+        $stmt = $conn->prepare("SELECT usuario, perfil FROM usuarios WHERE id = ?");
+        $stmt->execute([$id]);
+        $alvo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$alvo || $perfil === null) {
+            voltarCom('error', 'Usuário ou perfil inválido.');
+        }
+
+        // Rebaixar a si mesmo tiraria a pessoa desta tela no meio da ação
+        if ($alvo['usuario'] === $_SESSION['usuario']) {
+            voltarCom('error', 'Você não pode mudar o próprio perfil.');
+        }
+
+        if ($alvo['perfil'] === 'admin' && $perfil !== 'admin' && totalAdmins($conn) <= 1) {
+            voltarCom('error', 'O sistema precisa de pelo menos um administrador.');
+        }
+
+        $conn->prepare("UPDATE usuarios SET perfil = ? WHERE id = ?")->execute([$perfil, $id]);
+
+        voltarCom('success', "\"{$alvo['usuario']}\" agora é " . nomePerfil($perfil) . '.');
+    }
+
     voltarCom('error', 'Ação desconhecida.');
 }
 
-$usuarios = $conn->query("SELECT id, usuario FROM usuarios ORDER BY usuario")->fetchAll(PDO::FETCH_ASSOC);
+$usuarios = $conn->query("SELECT id, usuario, perfil FROM usuarios ORDER BY perfil = 'admin' DESC, usuario")->fetchAll(PDO::FETCH_ASSOC);
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -172,8 +213,9 @@ require_once __DIR__ . '/../includes/header.php';
 <h2>Usuários</h2>
 
 <p class="periodo-atual">
-    Quem pode entrar no sistema. Todo usuário vê tudo — vendas, lucro e
-    relatórios —, então crie acesso só para quem deve ter essa visão.
+    Quem pode entrar no sistema. O <strong>Vendedor</strong> registra vendas, consulta o
+    estoque e imprime comprovantes, mas não vê custo nem lucro e não cancela vendas.
+    O <strong>Administrador</strong> vê e faz tudo, inclusive esta tela.
 </p>
 
 <!-- LISTA -->
@@ -187,12 +229,22 @@ require_once __DIR__ . '/../includes/header.php';
             <li>
                 <span class="lista-nome">
                     <?= htmlspecialchars($u['usuario']) ?>
-                    <?php if ($ehVoce): ?>
-                        <small>você</small>
-                    <?php endif; ?>
+                    <small><?= htmlspecialchars(nomePerfil($u['perfil'])) ?><?= $ehVoce ? ' · você' : '' ?></small>
                 </span>
 
                 <?php if (!$ehVoce): ?>
+                    <?php $outroPerfil = $u['perfil'] === 'admin' ? 'vendedor' : 'admin'; ?>
+                    <form method="POST" class="form-inline"
+                        onsubmit="return confirm(<?= htmlspecialchars(json_encode('Tornar ' . $u['usuario'] . ' ' . nomePerfil($outroPerfil) . '? Vale no próximo clique da pessoa.')) ?>)">
+                        <?= campoCsrf() ?>
+                        <input type="hidden" name="acao" value="perfil">
+                        <input type="hidden" name="id" value="<?= (int) $u['id'] ?>">
+                        <input type="hidden" name="perfil" value="<?= $outroPerfil ?>">
+                        <button type="submit" class="btn btn-secondary btn-sm">
+                            Tornar <?= htmlspecialchars(nomePerfil($outroPerfil)) ?>
+                        </button>
+                    </form>
+
                     <form method="POST" class="form-inline"
                         onsubmit="return confirm(<?= htmlspecialchars(json_encode('Excluir o usuário ' . $u['usuario'] . '? Ele perde o acesso na hora.')) ?>)">
                         <?= campoCsrf() ?>
@@ -223,6 +275,16 @@ require_once __DIR__ . '/../includes/header.php';
                     title="Letras sem acento, números, ponto, hífen ou sublinhado"
                     placeholder="ex.: maria" autocapitalize="none" spellcheck="false">
                 <small class="custo-atual">Sem espaço nem acento. É o que a pessoa digita para entrar.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="novoPerfil">Perfil</label>
+                <select id="novoPerfil" name="perfil" required>
+                    <?php foreach (perfis() as $chave => $rotulo): ?>
+                        <option value="<?= htmlspecialchars($chave) ?>"><?= htmlspecialchars($rotulo) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="custo-atual">Vendedor vende e consulta; Administrador vê tudo, inclusive lucro.</small>
             </div>
 
             <div class="form-group">

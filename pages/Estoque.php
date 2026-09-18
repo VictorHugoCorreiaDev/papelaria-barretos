@@ -18,7 +18,8 @@ $offset = ($page - 1) * $limit;
  * atalho não há como saber quais ainda faltam preencher — e produto sem
  * custo entra no lucro como se fosse margem integral.
  */
-$semCusto = isset($_GET['semcusto']) && $_GET['semcusto'] === '1';
+// Custo é informação do administrador: para o vendedor o filtro não existe
+$semCusto = ehAdmin() && isset($_GET['semcusto']) && $_GET['semcusto'] === '1';
 
 /*
  * Filtro de estoque negativo: saldo abaixo de zero é sempre erro de
@@ -26,7 +27,7 @@ $semCusto = isset($_GET['semcusto']) && $_GET['semcusto'] === '1';
  * validação de estoque passou a impedir. Os saldos anteriores a essa
  * correção continuam errados e precisam de conferência física.
  */
-$negativo = isset($_GET['negativo']) && $_GET['negativo'] === '1';
+$negativo = ehAdmin() && isset($_GET['negativo']) && $_GET['negativo'] === '1';
 
 $params = [];
 $condicoes = [];
@@ -93,7 +94,10 @@ if ($totalRegistros > 0) {
 
 <h2>Estoque</h2>
 
-<?php if ($totalNegativo > 0): ?>
+<?php
+// Os avisos pedem correção pela edição do produto e falam de custo: são do admin
+?>
+<?php if (ehAdmin() && $totalNegativo > 0): ?>
     <div class="aviso-custo aviso-erro">
         <strong><?= $totalNegativo ?> produto<?= $totalNegativo == 1 ? '' : 's' ?> com estoque negativo.</strong>
         Saldo abaixo de zero é resto de vendas registradas antes da validação de
@@ -109,7 +113,7 @@ if ($totalRegistros > 0) {
     </div>
 <?php endif; ?>
 
-<?php if ($totalSemCusto > 0): ?>
+<?php if (ehAdmin() && $totalSemCusto > 0): ?>
     <div class="aviso-custo">
         <strong><?= $totalSemCusto ?> produto<?= $totalSemCusto == 1 ? '' : 's' ?> sem custo de compra.</strong>
         Enquanto o custo estiver zerado, o lucro no dashboard e nos relatórios
@@ -168,11 +172,17 @@ if ($totalRegistros > 0) {
         <thead>
             <tr>
                 <th>Produto</th>
-                <th>Custo de compra</th>
+                <?php if (ehAdmin()): ?>
+                    <th>Custo de compra</th>
+                <?php endif; ?>
                 <th>Preço de venda</th>
-                <th>Margem</th>
+                <?php if (ehAdmin()): ?>
+                    <th>Margem</th>
+                <?php endif; ?>
                 <th>Quantidade</th>
-                <th>Ações</th>
+                <?php if (ehAdmin()): ?>
+                    <th>Ações</th>
+                <?php endif; ?>
             </tr>
         </thead>
 
@@ -189,6 +199,7 @@ if ($totalRegistros > 0) {
                     <tr>
                         <td><?= htmlspecialchars($p['nome']) ?></td>
 
+                        <?php if (ehAdmin()): ?>
                         <td>
                             <?php if ($temCusto): ?>
                                 R$ <?= number_format($p['custo'], 2, ',', '.') ?>
@@ -196,9 +207,11 @@ if ($totalRegistros > 0) {
                                 <span class="badge badge-cancelado">Sem custo</span>
                             <?php endif; ?>
                         </td>
+                        <?php endif; ?>
 
                         <td>R$ <?= number_format($p['preco'], 2, ',', '.') ?></td>
 
+                        <?php if (ehAdmin()): ?>
                         <td>
                             <?php if ($margem === null): ?>
                                 <span style="color: var(--text-gray);">—</span>
@@ -208,6 +221,7 @@ if ($totalRegistros > 0) {
                                 </span>
                             <?php endif; ?>
                         </td>
+                        <?php endif; ?>
 
                         <td>
                             <?php if ($p['quantidade'] < 0): ?>
@@ -219,6 +233,7 @@ if ($totalRegistros > 0) {
                             <?php endif; ?>
                         </td>
 
+                        <?php if (ehAdmin()): ?>
                         <td>
                             <a href="EditarProdutos.php?id=<?= (int) $p['id'] ?>"
                                 class="btn btn-primary btn-sm">
@@ -238,6 +253,7 @@ if ($totalRegistros > 0) {
                                 <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
                             </form>
                         </td>
+                        <?php endif; ?>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>

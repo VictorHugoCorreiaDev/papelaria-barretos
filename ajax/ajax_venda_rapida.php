@@ -125,20 +125,31 @@ try {
         WHERE status = 'ativa' AND created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY
     ")->fetch(PDO::FETCH_ASSOC);
 
+    $cards = [
+        'vendasMes' => $vendasMes,
+        'faturamentoMes' => $faturamentoMes,
+        'lucroMes' => $lucroMes,
+        'margemMes' => $margemMes,
+        'ticketMedioMes' => $ticketMedioMes,
+        'vendasHoje' => (int) $hoje['vendas'],
+        'receitaHoje' => (float) $hoje['faturamento']
+    ];
+
+    /*
+     * O JSON aparece nas ferramentas do navegador: esconder o card na tela
+     * não basta. Para o vendedor vão só os números de hoje, que ele já vê
+     * no dashboard (includes/permissoes.php).
+     */
+    if (!ehAdmin()) {
+        $cards = array_intersect_key($cards, array_flip(['vendasHoje', 'receitaHoje']));
+    }
+
     echo json_encode([
         'status' => 'sucesso',
         'mensagem' => 'Venda registrada com sucesso!',
         'novoEstoque' => $novoEstoque,
         'vendaId' => (int) $venda_id,
-        'cards' => [
-            'vendasMes' => $vendasMes,
-            'faturamentoMes' => $faturamentoMes,
-            'lucroMes' => $lucroMes,
-            'margemMes' => $margemMes,
-            'ticketMedioMes' => $ticketMedioMes,
-            'vendasHoje' => (int) $hoje['vendas'],
-            'receitaHoje' => (float) $hoje['faturamento']
-        ]
+        'cards' => $cards
     ]);
 
 } catch (Exception $e) {

@@ -113,7 +113,7 @@ if (session_status() === PHP_SESSION_NONE) {
                         </svg>
                     </button>
 
-                    <span>👤 <?= htmlspecialchars($_SESSION['usuario'] ?? '') ?></span>
+                    <span>👤 <?= htmlspecialchars($_SESSION['usuario'] ?? '') ?><?php if (function_exists('nomePerfil')): ?> <small class="perfil-rotulo">· <?= htmlspecialchars(nomePerfil($_SESSION['perfil'] ?? '')) ?></small><?php endif; ?></span>
 
                 </div>
             </header>

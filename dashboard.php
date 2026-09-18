@@ -266,7 +266,15 @@ $ultimasVendas = $conn->query("
     </div>
 </div>
 
-<p class="periodo-atual">Indicadores de <strong><?= $nomeMes ?></strong></p>
+<?php
+/*
+ * O vendedor vê só o dia: os números do mês, o lucro, o resultado, o
+ * gráfico e o comparativo são do administrador (includes/permissoes.php).
+ */
+?>
+<?php if (ehAdmin()): ?>
+    <p class="periodo-atual">Indicadores de <strong><?= $nomeMes ?></strong></p>
+<?php endif; ?>
 
 <div class="cards-grid">
 
@@ -278,6 +286,7 @@ $ultimasVendas = $conn->query("
       página e a atualização.
     -->
 
+    <?php if (ehAdmin()): ?>
     <div class="card indicador">
         <h3>🧾 Vendas no mês</h3>
         <span id="cardVendasMes"><?= $vendasMes ?></span>
@@ -317,6 +326,7 @@ $ultimasVendas = $conn->query("
             <?php endif; ?>
         </small>
     </div>
+    <?php endif; ?>
 
     <div class="card indicador">
         <h3>📅 Hoje</h3>
@@ -328,6 +338,7 @@ $ultimasVendas = $conn->query("
 
 </div>
 
+<?php if (ehAdmin()): ?>
 <p class="periodo-atual">
     Ticket médio do mês: <strong>R$ <span id="cardTicketMedioMes"><?= number_format($ticketMedioMes, 2, ',', '.') ?></span></strong>
 </p>
@@ -445,6 +456,8 @@ $ultimasVendas = $conn->query("
     </table>
 </div>
 
+<?php endif; /* fim do bloco só do administrador: ticket, gráfico e comparativo */ ?>
+
 <!-- RUPTURA DE ESTOQUE E ÚLTIMAS VENDAS -->
 <div class="painel-duplo">
 
@@ -466,9 +479,11 @@ $ultimasVendas = $conn->query("
                         <span class="badge <?= (int) $p['quantidade'] <= 0 ? 'badge-cancelado' : 'badge-ativa' ?>">
                             <?= (int) $p['quantidade'] <= 0 ? 'Sem estoque' : 'Restam ' . (int) $p['quantidade'] ?>
                         </span>
-                        <a href="/pages/EditarProdutos.php?id=<?= (int) $p['id'] ?>" class="btn btn-secondary btn-sm">
-                            Repor
-                        </a>
+                        <?php if (ehAdmin()): ?>
+                            <a href="/pages/EntradaEstoque.php?produto=<?= (int) $p['id'] ?>" class="btn btn-secondary btn-sm">
+                                Repor
+                            </a>
+                        <?php endif; ?>
                     </li>
                 <?php endforeach; ?>
             </ul>
