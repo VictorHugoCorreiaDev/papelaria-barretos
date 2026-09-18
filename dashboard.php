@@ -244,6 +244,8 @@ $ultimasVendas = $conn->query("
 
 ?>
 
+<?php require __DIR__ . '/includes/aviso_comprovante.php'; ?>
+
 <!-- Linha Cards -->
 <div class="titulo-com-acao saudacao">
     <div>
@@ -496,7 +498,8 @@ $ultimasVendas = $conn->query("
                             <?= htmlspecialchars(nomeCliente($v['cliente'])) ?>
                             <small>
                                 <?= (int) $v['itens'] ?> item(ns) ·
-                                <?= htmlspecialchars(nomeFormaPagamento($v['forma_pagamento'])) ?>
+                                <?= htmlspecialchars(nomeFormaPagamento($v['forma_pagamento'])) ?> ·
+                                <a href="/pages/Comprovante.php?id=<?= (int) $v['id'] ?>">comprovante</a>
                             </small>
                         </span>
                         <strong class="lista-valor">R$ <?= number_format($v['total'], 2, ',', '.') ?></strong>

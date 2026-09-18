@@ -73,6 +73,10 @@ try {
 
     $conn->commit();
 
+    // O dashboard recarrega depois da venda rápida e mostra o aviso com o
+    // link do comprovante (includes/aviso_comprovante.php)
+    $_SESSION['ultima_venda'] = (int) $venda_id;
+
     // ==============================
     // Buscar novo estoque atualizado
     // ==============================
@@ -125,6 +129,7 @@ try {
         'status' => 'sucesso',
         'mensagem' => 'Venda registrada com sucesso!',
         'novoEstoque' => $novoEstoque,
+        'vendaId' => (int) $venda_id,
         'cards' => [
             'vendasMes' => $vendasMes,
             'faturamentoMes' => $faturamentoMes,

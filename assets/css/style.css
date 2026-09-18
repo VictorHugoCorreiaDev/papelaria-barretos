@@ -1868,3 +1868,168 @@ body.login-page::after {
 .form-inline {
     display: inline;
 }
+
+/* ===== Aviso de venda registrada (includes/aviso_comprovante.php) ===== */
+
+.aviso-venda {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: var(--success-soft);
+    border: 1px solid var(--success);
+    color: var(--fg-1);
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* ===== Comprovante de venda (pages/Comprovante.php) =====
+   Sempre claro, como o papel: a página não aplica o tema salvo. Largura
+   de cupom de 80mm, que serve tanto à impressora térmica quanto à folha A4 */
+
+.pagina-comprovante {
+    background: var(--bg-canvas);
+    padding: 24px 16px;
+}
+
+.comprovante-acoes {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.comprovante {
+    max-width: 80mm;
+    margin: 0 auto;
+    background: #FFFFFF;
+    color: #000000;
+    padding: 18px 16px;
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.comprovante-loja {
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #000000;
+    margin-bottom: 10px;
+}
+
+.comprovante-loja strong {
+    display: block;
+    font-size: 15px;
+}
+
+.comprovante-cancelada {
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border: 2px solid #000000;
+    padding: 6px;
+    margin: 0 0 10px;
+}
+
+.comprovante-dados,
+.comprovante-totais {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 12px;
+    margin: 0 0 10px;
+}
+
+.comprovante-dados dd,
+.comprovante-totais dd {
+    margin: 0;
+    text-align: right;
+}
+
+.comprovante-totais {
+    padding-top: 8px;
+    border-top: 1px dashed #000000;
+}
+
+.comprovante-totais .comprovante-total {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+/* A tabela do cupom não herda o visual das tabelas do sistema */
+.comprovante .comprovante-itens {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 8px;
+    background: none;
+    box-shadow: none;
+}
+
+/* Nem o zebrado nem o destaque ao passar o mouse das tabelas do sistema */
+.comprovante .comprovante-itens tr,
+.comprovante .comprovante-itens tr:hover {
+    background: none;
+}
+
+.comprovante .comprovante-itens th,
+.comprovante .comprovante-itens td {
+    padding: 4px 0;
+    background: none;
+    color: #000000;
+    border: none;
+    font-size: 13px;
+    text-transform: none;
+    letter-spacing: 0;
+    vertical-align: top;
+}
+
+.comprovante .comprovante-itens th {
+    font-weight: 700;
+    text-align: left;
+    border-bottom: 1px dashed #000000;
+}
+
+.comprovante .comprovante-itens th:last-child,
+.comprovante .comprovante-itens td:last-child {
+    /* A regra global td:last-child vira flex para os botões de ação, e em
+       flex o text-align não alinha: valores curtos ficavam fora da coluna */
+    display: table-cell;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.comprovante-itens small {
+    display: block;
+    color: #444444;
+}
+
+.comprovante-rodape {
+    text-align: center;
+    padding-top: 10px;
+    border-top: 1px dashed #000000;
+}
+
+.comprovante-rodape p {
+    margin: 2px 0;
+}
+
+@media print {
+    .pagina-comprovante {
+        padding: 0;
+    }
+
+    .comprovante-acoes {
+        display: none;
+    }
+
+    .comprovante {
+        border: none;
+        border-radius: 0;
+        padding: 0;
+    }
+}

@@ -454,6 +454,10 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
                                 Ver Itens
                             </button>
 
+                            <a href="Comprovante.php?id=<?= (int) $v['id'] ?>" class="btn btn-secondary btn-sm">
+                                Comprovante
+                            </a>
+
                             <?php if ($v['status'] === 'ativa'): ?>
                                 <form method="POST" action="CancelarVenda.php" class="form-inline"
                                     onsubmit="return confirm('Tem certeza que deseja cancelar esta venda?')">

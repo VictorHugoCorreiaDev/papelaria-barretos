@@ -57,6 +57,10 @@ Toda página precisa terminar incluindo o `footer.php` — é ele que fecha `.co
 
 `pages/ExportarRelatorio.php` é a exceção: devolve um CSV para download, não HTML, então não inclui header nem footer. Qualquer saída antes dos `header()` de `Content-Type`/`Content-Disposition` corromperia o arquivo baixado. A tela de relatórios chega nele por um `<button formaction>`, e não por link, para que a exportação receba as datas que estão nos campos no momento do clique.
 
+`pages/Comprovante.php` também é avulsa: imita um cupom de papel (80mm, serve à impressora térmica e à folha A4), então não leva header, footer nem sidebar, e **não aplica o tema salvo** — é sempre claro. Mostra o preço congelado em `vendas_produtos`, abre também vendas canceladas (com a faixa "Venda cancelada") e termina com "Documento sem valor fiscal": o sistema não emite NFC-e, e um cupom sem esse aviso poderia ser tomado por nota. Quem fecha uma venda (carrinho ou venda rápida) grava `$_SESSION['ultima_venda']`, e o `includes/aviso_comprovante.php`, incluído depois do header, mostra uma vez o aviso com o link do comprovante.
+
+As tabelas do sistema têm uma regra global `td:last-child { display: flex }` para alinhar os botões de ação. Tabela que não seja de listagem precisa devolver `display: table-cell` à última coluna — em flex, o `text-align` não funciona (foi o que desalinhou os valores do comprovante).
+
 `includes/validacao.php` guarda validações reaproveitáveis entre páginas (hoje, a `dataValida()` usada pelo `Relatorios.php`). São funções globais, então inclua sempre com `require_once`.
 
 `includes/configuracao.php` acerta o fuso horário e precisa vir logo **depois** do `Conexao.php` — ele ajusta a sessão do MySQL, então sem a conexão aberta não tem efeito. Todo ponto de entrada que carrega o `Conexao.php` carrega também esse arquivo; ao criar um novo, mantenha o par.

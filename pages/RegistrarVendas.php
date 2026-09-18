@@ -194,6 +194,7 @@ if (isset($_POST['finalizar'])) {
 
             $conn->commit();
             $_SESSION['carrinho'] = [];
+            $_SESSION['ultima_venda'] = (int) $venda_id;
             $_SESSION['toast'] = [
                 'type' => 'success',
                 'message' => 'Venda finalizada com sucesso!'
@@ -230,6 +231,8 @@ require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <h2>Registrar Venda</h2>
+
+<?php require __DIR__ . '/../includes/aviso_comprovante.php'; ?>
 
 
 
