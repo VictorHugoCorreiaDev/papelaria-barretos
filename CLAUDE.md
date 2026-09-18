@@ -31,6 +31,7 @@ Não há arquivo `.sql` de schema, mas o `README.md` traz o DDL das quatro tabel
 - `vendas(id, total, desconto, cliente, forma_pagamento, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas. **`total` é o valor líquido**, o que de fato entrou no caixa: é ele que alimenta faturamento e lucro em todas as telas. O `desconto` fica registrado à parte, para consulta; o valor bruto, quando precisar, é `total + desconto`.
 - `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario, custo_unitario)` — congelam preço e custo no momento da venda, de modo que totais e lucros históricos sobrevivem a alterações de preço ou de custo.
 - `despesas(id, descricao, categoria, valor, data_despesa, forma_pagamento, observacao, created_at)` — gastos do negócio. Não tem relação com vendas nem com estoque, e por isso pode ser excluída de fato, diferente de venda. As categorias são uma lista fixa em `includes/despesa.php`: texto livre faria "Energia", "energia" e "Luz" virarem três grupos no relatório.
+- `entradas_estoque(id, produto_id, quantidade, custo_unitario, fornecedor, data_entrada, observacao, created_at)` — cada compra ou reposição de mercadoria. Só produto, quantidade e data são obrigatórios; `custo_unitario` nulo significa "não informado" e fica fora da soma do investido.
 - `tentativas_login(id, usuario, ip, created_at)` — falhas de login recentes, usadas pelo limite de tentativas (veja a seção própria).
 
 ## Estrutura das páginas
@@ -111,11 +112,19 @@ A tela de vendas também filtra por **período e busca** (cliente, nome de produ
 
 ## Fluxos de estoque e venda
 
-O estoque é alterado em três lugares, todos dentro de `beginTransaction()`/`commit()`/`rollBack()`:
+O estoque é alterado em cinco lugares, todos dentro de `beginTransaction()`/`commit()`/`rollBack()`:
 
 - `pages/RegistrarVendas.php` — carrinho de vários itens mantido em `$_SESSION['carrinho']`; "Finalizar" insere uma linha em `vendas`, uma linha em `vendas_produtos` por item e decrementa cada produto.
 - `ajax/ajax_venda_rapida.php` — venda rápida de item único, a partir do formulário do dashboard; faz as mesmas inserções e devolve JSON `{status, mensagem, novoEstoque, cards}`.
-- `pages/CancelarVenda.php` — a única reversão: devolve as quantidades a `produtos` e define `status = 'cancelada'`.
+- `pages/CancelarVenda.php` — reversão de venda: devolve as quantidades a `produtos` e define `status = 'cancelada'`.
+- `pages/EntradaEstoque.php` — soma a quantidade comprada com `quantidade = quantidade + ?` (sem ler antes, para não perder uma venda que aconteça no meio) e grava a linha em `entradas_estoque`.
+- `pages/ExcluirEntrada.php` — desfaz uma entrada com a mesma baixa condicional das vendas. Se parte das unidades já foi vendida, o saldo não cobre e a operação é recusada, em vez de deixar o estoque negativo.
+
+A **edição do produto** continua podendo sobrescrever a quantidade, para acerto de inventário. Ela não gera registro em `entradas_estoque`: reposição deve passar pela tela de entrada, senão o histórico de compras fica incompleto.
+
+**Compra de mercadoria não é despesa.** O custo do produto já sai do lucro quando ele é vendido (`custo_unitario` em `vendas_produtos`); lançar a compra também em despesas contaria o mesmo dinheiro duas vezes. Por isso o "investido em mercadoria" aparece só na tela de entrada, sem entrar no resultado do mês.
+
+Na entrada, o custo informado substitui o custo do produto quando a opção "usar este custo daqui em diante" está marcada (vem marcada). Vale o custo da compra mais recente, não uma média: é o que melhor representa quanto custa repor. Vendas já feitas não mudam, porque guardam o custo da época. Desfazer a entrada não restaura o custo anterior — ele não é guardado.
 
 `pages/ExcluirProdutos.php` recusa excluir um produto que apareça em `vendas_produtos` (não há FK com cascade) e redireciona com `?erro=vinculado`.
 
@@ -123,7 +132,7 @@ O estoque é alterado em três lugares, todos dentro de `beginTransaction()`/`co
 
 No carrinho, a adição valida o **acumulado** (o que já está no carrinho mais o que está entrando), e o mesmo produto soma na linha existente em vez de criar outra. Validar cada adição isolada permitia adicionar 3 unidades duas vezes tendo 3 em estoque.
 
-Quantidades e valores vindos de formulário passam por `quantidadeInteira()` e `valorMonetario()` do `includes/validacao.php`. O `min="0"` do HTML vale só no navegador: sem a validação no servidor, preço e custo negativos eram gravados, e quantidade negativa numa venda *aumentava* o estoque na finalização.
+Quantidades e valores vindos de formulário passam por `quantidadeInteira()` e `valorMonetario()` do `includes/validacao.php`. A `quantidadeInteira()` aceita só dígitos (zero à esquerda vale, "05" é 5) e **recusa fração**: antes, `is_numeric` + `(int)` transformava "2.5" em 2 sem aviso. O `min="0"` do HTML vale só no navegador: sem a validação no servidor, preço e custo negativos eram gravados, e quantidade negativa numa venda *aumentava* o estoque na finalização.
 
 **Vendas canceladas nunca entram em faturamento ou lucro**, em nenhuma tela — nem no fechamento diário do `ListarVendas.php`, nem nos cards do dashboard, nem nos relatórios. Elas aparecem nas listagens (esmaecidas, com badge) para consulta, mas somar uma venda cancelada seria contar dinheiro que não entrou.
 

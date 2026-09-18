@@ -17,6 +17,7 @@ $tabelas = [
     'vendas'          => ['rotulo' => 'Vendas',          'descricao' => 'Todas as vendas, com cliente, desconto e situação'],
     'vendas_produtos' => ['rotulo' => 'Itens das vendas', 'descricao' => 'O que foi vendido em cada venda, com preço e custo da época'],
     'despesas'        => ['rotulo' => 'Despesas',        'descricao' => 'Gastos lançados, por categoria'],
+    'entradas_estoque' => ['rotulo' => 'Entradas de estoque', 'descricao' => 'Compras e reposições, com fornecedor e custo'],
 ];
 
 // Contagem de registros, para o backup mostrar o que está sendo levado

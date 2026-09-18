@@ -110,6 +110,8 @@ window.addEventListener('DOMContentLoaded', function () {
 
     ativarBuscaProduto('buscaProdutoRapida', 'produto', 'contadorProdutosRapida');
     ativarBuscaProduto('buscaProdutoCarrinho', 'produtoCarrinho', 'contadorProdutosCarrinho');
+    ativarBuscaProduto('buscaProdutoEntrada', 'produtoEntrada', 'contadorProdutosEntrada', 'quantidadeEntrada');
+    ativarCustoAtual();
     ativarDesconto();
 });
 
@@ -339,7 +341,7 @@ function semAcento(texto) {
         .toLowerCase();
 }
 
-function ativarBuscaProduto(idCampo, idSelect, idContador) {
+function ativarBuscaProduto(idCampo, idSelect, idContador, idProximo = 'quantidade') {
     const campo = document.getElementById(idCampo);
     const select = document.getElementById(idSelect);
     const contador = idContador ? document.getElementById(idContador) : null;
@@ -401,10 +403,40 @@ function ativarBuscaProduto(idCampo, idSelect, idContador) {
         if (e.key !== 'Enter') return;
 
         e.preventDefault();
-        document.getElementById('quantidade')?.focus();
+        document.getElementById(idProximo)?.focus();
     });
 
     filtrar();
+}
+
+// ===== Entrada de estoque =====
+
+// Mostra o custo que o produto tem hoje ao lado da opção de substituí-lo,
+// para a pessoa decidir se o custo da compra deve virar o custo do produto
+function ativarCustoAtual() {
+    const select = document.getElementById('produtoEntrada');
+    const aviso = document.getElementById('custoAtualEntrada');
+    if (!select || !aviso) return;
+
+    const formato = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    function mostrar() {
+        const opcao = select.selectedOptions[0];
+
+        if (!opcao || opcao.value === '') {
+            aviso.textContent = '';
+            return;
+        }
+
+        const custo = parseFloat(opcao.dataset.custo) || 0;
+
+        aviso.textContent = custo > 0
+            ? 'Custo atual do produto: ' + formato.format(custo)
+            : 'Este produto ainda não tem custo cadastrado: informar o custo aqui corrige o lucro das próximas vendas.';
+    }
+
+    select.addEventListener('change', mostrar);
+    mostrar();
 }
 
 // ===== Desconto na finalização da venda =====

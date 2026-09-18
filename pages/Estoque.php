@@ -225,6 +225,11 @@ if ($totalRegistros > 0) {
                                 Editar
                             </a>
 
+                            <a href="EntradaEstoque.php?produto=<?= (int) $p['id'] ?>"
+                                class="btn btn-secondary btn-sm">
+                                Entrada
+                            </a>
+
                             <!-- Formulário, não link: excluir por GET acontecia só de abrir a URL -->
                             <form method="POST" action="ExcluirProdutos.php" class="form-inline"
                                 onsubmit="return confirm('Deseja excluir este produto?')">

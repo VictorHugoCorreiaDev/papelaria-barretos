@@ -14,7 +14,7 @@ require_once __DIR__ . '/../includes/configuracao.php';
  * listagem das tabelas fica no Configuracoes.php.
  */
 
-$tabelasPermitidas = ['produtos', 'vendas', 'vendas_produtos', 'despesas'];
+$tabelasPermitidas = ['produtos', 'vendas', 'vendas_produtos', 'despesas', 'entradas_estoque'];
 
 $tabela = $_GET['tabela'] ?? '';
 

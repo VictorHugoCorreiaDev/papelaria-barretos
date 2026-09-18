@@ -2033,3 +2033,25 @@ body.login-page::after {
         padding: 0;
     }
 }
+
+/* ===== Entrada de estoque ===== */
+
+.opcao-marcar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.opcao-marcar input {
+    width: auto;
+    margin: 0;
+}
+
+.custo-atual {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-gray);
+}
