@@ -1060,35 +1060,29 @@ body.login-page::after {
     filter: brightness(0) invert(1);
 }
 
-/* Painel do login: sem cartão, alinhado à esquerda, como uma folha de
-   entrada. A marca d'água do fundo continua fazendo o papel de ilustração */
+/* Painel do login: cartão com borda, conteúdo alinhado à esquerda e só a
+   logo centralizada */
 .login-painel {
     position: relative;
     z-index: 1;
-    width: 400px;
+    width: 440px;
     max-width: calc(100% - var(--space-8));
-    padding: var(--space-10) 0;
+    padding: var(--space-10) var(--space-8);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-1);
+    border-radius: var(--r-xl);
     text-align: left;
 }
 
 .login-logo {
     display: block;
-    width: 132px;
+    width: 150px;
     height: auto;
-    margin-bottom: var(--space-8);
+    margin: 0 auto var(--space-8);
 }
 
 [data-theme="dark"] .login-logo {
     filter: brightness(0) invert(1);
-}
-
-.login-sobretitulo {
-    margin: 0 0 var(--space-3);
-    font-size: var(--fs-12);
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--fg-3);
 }
 
 .login-titulo {
@@ -1105,6 +1099,11 @@ body.login-page::after {
     font-size: var(--fs-14);
     line-height: 1.5;
     color: var(--fg-3);
+}
+
+.login-subtitulo strong {
+    color: var(--fg-2);
+    font-weight: 600;
 }
 
 .login-form {
@@ -2196,5 +2195,9 @@ body.login-page::after {
 @media (max-width: 600px) {
     body.login-page::after {
         display: none;
+    }
+
+    .login-painel {
+        padding: var(--space-8) var(--space-5);
     }
 }

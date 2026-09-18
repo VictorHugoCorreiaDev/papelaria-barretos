@@ -103,18 +103,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <img src="/assets/img/logo.webp" alt="Bazar e Papelaria Barretos" class="login-logo">
 
+        <h1 class="login-titulo">Bem-vindo de volta.</h1>
+
         <?php
         /*
-         * A identificação do sistema fica visível de propósito: uma tela só
-         * com usuário e senha num subdomínio gratuito é o formato que o
-         * Google procura ao caçar páginas falsas de login (foi o que levou
-         * ao aviso de "site perigoso"). Não enxugue este texto.
+         * O nome da loja precisa estar em TEXTO na tela, não só na imagem da
+         * logo: uma tela só com usuário e senha num subdomínio gratuito é o
+         * formato que o Google procura ao caçar páginas falsas de login (foi
+         * o que levou ao aviso de "site perigoso"). Não tire o nome daqui.
          */
         ?>
-        <p class="login-sobretitulo">Sistema interno · Bazar e Papelaria Barretos</p>
-        <h1 class="login-titulo">Bem-vindo de volta.</h1>
         <p class="login-subtitulo">
-            Acesse o painel de vendas e estoque da loja. Acesso restrito à equipe.
+            Acesse o painel de vendas e estoque da <strong>Bazar e Papelaria Barretos</strong>.
+            Acesso restrito à equipe.
         </p>
 
         <?php if ($erro): ?>
