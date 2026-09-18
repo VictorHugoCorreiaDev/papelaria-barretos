@@ -63,7 +63,7 @@ $resultadoMes = $lucroMes - $despesasMes;
 $hoje = $conn->query("
     SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
     FROM vendas
-    WHERE status = 'ativa' AND DATE(created_at) = CURDATE()
+    WHERE status = 'ativa' AND created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY
 ")->fetch(PDO::FETCH_ASSOC);
 
 $vendasHoje = (int) $hoje['vendas'];
@@ -133,7 +133,7 @@ for ($i = 5; $i >= 0; $i--) {
     $stmtMes = $conn->prepare("
         SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
         FROM vendas
-        WHERE status = 'ativa' AND DATE(created_at) BETWEEN :inicio AND :fim
+        WHERE status = 'ativa' AND created_at >= :inicio AND created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
     ");
     $stmtMes->execute([':inicio' => $primeiroDia, ':fim' => $ultimoDia]);
     $dadosMes = $stmtMes->fetch(PDO::FETCH_ASSOC);
@@ -142,7 +142,7 @@ for ($i = 5; $i >= 0; $i--) {
         SELECT COALESCE(SUM(vp.quantidade * vp.custo_unitario), 0)
         FROM vendas_produtos vp
         JOIN vendas v ON v.id = vp.venda_id
-        WHERE v.status = 'ativa' AND DATE(v.created_at) BETWEEN :inicio AND :fim
+        WHERE v.status = 'ativa' AND v.created_at >= :inicio AND v.created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
     ");
     $stmtCustoMes->execute([':inicio' => $primeiroDia, ':fim' => $ultimoDia]);
     $custoDoMes = (float) $stmtCustoMes->fetchColumn();

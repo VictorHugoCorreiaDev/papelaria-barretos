@@ -22,7 +22,7 @@ $sql = "
             WHERE vp.venda_id = v.id
         ), 0) AS custo
     FROM vendas v
-    WHERE DATE(v.created_at) BETWEEN :inicio AND :fim
+    WHERE v.created_at >= :inicio AND v.created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
     ORDER BY v.created_at
 ";
 

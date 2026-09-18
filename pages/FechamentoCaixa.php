@@ -19,16 +19,20 @@ require_once __DIR__ . '/../includes/header.php';
 
 $dia = dataValida($_GET['dia'] ?? null, date('Y-m-d'));
 
+// Limite superior dos filtros por dia: comparar created_at direto, e não
+// DATE(created_at), é o que deixa o MySQL usar o índice (migração 005)
+$diaSeguinte = date('Y-m-d', strtotime($dia . ' +1 day'));
+
 /* VENDAS DO DIA, POR FORMA DE PAGAMENTO */
 
 $stmtFormas = $conn->prepare("
     SELECT forma_pagamento, COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS valor
     FROM vendas
-    WHERE status = 'ativa' AND DATE(created_at) = :dia
+    WHERE status = 'ativa' AND created_at >= :dia AND created_at < :dia_seguinte
     GROUP BY forma_pagamento
     ORDER BY valor DESC
 ");
-$stmtFormas->execute([':dia' => $dia]);
+$stmtFormas->execute([':dia' => $dia, ':dia_seguinte' => $diaSeguinte]);
 $formas = $stmtFormas->fetchAll(PDO::FETCH_ASSOC);
 
 $totalRecebido = 0.0;
@@ -51,9 +55,9 @@ $resumoDia = $conn->prepare("
     SELECT COALESCE(SUM(desconto), 0) AS descontos,
            SUM(CASE WHEN status = 'cancelada' THEN 1 ELSE 0 END) AS canceladas
     FROM vendas
-    WHERE DATE(created_at) = :dia
+    WHERE created_at >= :dia AND created_at < :dia_seguinte
 ");
-$resumoDia->execute([':dia' => $dia]);
+$resumoDia->execute([':dia' => $dia, ':dia_seguinte' => $diaSeguinte]);
 $resumo = $resumoDia->fetch(PDO::FETCH_ASSOC);
 
 /* CUSTO E LUCRO DO DIA */
@@ -62,9 +66,9 @@ $stmtCusto = $conn->prepare("
     SELECT COALESCE(SUM(vp.quantidade * vp.custo_unitario), 0)
     FROM vendas_produtos vp
     JOIN vendas v ON v.id = vp.venda_id
-    WHERE v.status = 'ativa' AND DATE(v.created_at) = :dia
+    WHERE v.status = 'ativa' AND v.created_at >= :dia AND v.created_at < :dia_seguinte
 ");
-$stmtCusto->execute([':dia' => $dia]);
+$stmtCusto->execute([':dia' => $dia, ':dia_seguinte' => $diaSeguinte]);
 $custoDia = (float) $stmtCusto->fetchColumn();
 
 $lucroDia = $totalRecebido - $custoDia;

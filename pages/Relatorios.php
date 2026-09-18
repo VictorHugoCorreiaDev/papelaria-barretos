@@ -25,7 +25,7 @@ $sqlResumo = "
         COALESCE(SUM(total), 0) as faturamento
     FROM vendas
     WHERE status = 'ativa'
-    AND DATE(created_at) BETWEEN :inicio AND :fim
+    AND created_at >= :inicio AND created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
 ";
 
 $stmt = $conn->prepare($sqlResumo);
@@ -49,7 +49,7 @@ $stmtCusto = $conn->prepare("
     FROM vendas_produtos vp
     JOIN vendas v ON v.id = vp.venda_id
     WHERE v.status = 'ativa'
-      AND DATE(v.created_at) BETWEEN :inicio AND :fim
+      AND v.created_at >= :inicio AND v.created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
 ");
 $stmtCusto->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
 $custo = (float) $stmtCusto->fetchColumn();
@@ -59,7 +59,7 @@ $stmtDesconto = $conn->prepare("
     SELECT COALESCE(SUM(desconto), 0)
     FROM vendas
     WHERE status = 'ativa'
-      AND DATE(created_at) BETWEEN :inicio AND :fim
+      AND created_at >= :inicio AND created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
 ");
 $stmtDesconto->execute([':inicio' => $dataInicio, ':fim' => $dataFim]);
 $descontos = (float) $stmtDesconto->fetchColumn();
@@ -79,7 +79,7 @@ $stmtPagamentos = $conn->prepare("
     SELECT forma_pagamento, COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS valor
     FROM vendas
     WHERE status = 'ativa'
-      AND DATE(created_at) BETWEEN :inicio AND :fim
+      AND created_at >= :inicio AND created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
     GROUP BY forma_pagamento
     ORDER BY valor DESC
 ");
@@ -130,7 +130,7 @@ $stmtRanking = $conn->prepare("
     JOIN vendas v ON v.id = vp.venda_id
     JOIN produtos p ON p.id = vp.produto_id
     WHERE v.status = 'ativa'
-      AND DATE(v.created_at) BETWEEN :inicio AND :fim
+      AND v.created_at >= :inicio AND v.created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
     GROUP BY vp.produto_id, p.nome
     ORDER BY unidades DESC, faturado DESC
     LIMIT 10
@@ -149,7 +149,7 @@ $offset = ($page - 1) * $limit;
 $stmtTotal = $conn->prepare("
     SELECT COUNT(*)
     FROM vendas
-    WHERE DATE(created_at) BETWEEN :inicio AND :fim
+    WHERE created_at >= :inicio AND created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
 ");
 $stmtTotal->execute([
     ':inicio' => $dataInicio,
@@ -180,7 +180,7 @@ $sqlLista = "
             WHERE vp.venda_id = v.id
         ), 0) AS custo
     FROM vendas v
-    WHERE DATE(v.created_at) BETWEEN :inicio AND :fim
+    WHERE v.created_at >= :inicio AND v.created_at < DATE_ADD(:fim, INTERVAL 1 DAY)
     ORDER BY v.created_at DESC
     LIMIT :limit OFFSET :offset
 ";

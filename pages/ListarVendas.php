@@ -83,10 +83,13 @@ if (!empty($dias)) {
         SELECT v.id, v.total, v.desconto, v.cliente, v.forma_pagamento, v.created_at, v.status,
                DATE(v.created_at) AS dia
         FROM vendas v
-        WHERE DATE(v.created_at) IN ($marcadores)
+        WHERE v.created_at >= ? AND v.created_at < DATE_ADD(?, INTERVAL 1 DAY)
+          AND DATE(v.created_at) IN ($marcadores)
     ";
 
-    $valores = $dias;
+    // O intervalo vem antes da lista: é ele que deixa o MySQL usar o índice
+    // de data, e a lista continua garantindo que só entram os dias da página
+    $valores = array_merge([min($dias), max($dias)], $dias);
 
     if ($status !== 'todas') {
         $sqlVendas .= " AND v.status = ?";

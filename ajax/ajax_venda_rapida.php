@@ -106,7 +106,7 @@ try {
     $hoje = $conn->query("
         SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
         FROM vendas
-        WHERE status = 'ativa' AND DATE(created_at) = CURDATE()
+        WHERE status = 'ativa' AND created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY
     ")->fetch(PDO::FETCH_ASSOC);
 
     echo json_encode([
