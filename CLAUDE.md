@@ -103,6 +103,8 @@ Ao criar uma ação que apaga ou reverte alguma coisa, siga o mesmo caminho: `re
 
 O `ListarVendas.php` segue a mesma mecânica, mas **pagina dias, não vendas** (`$diasPorPagina = 7`): a lista é agrupada por data e cada grupo fecha com o total do dia, então paginar por venda partiria um dia entre duas páginas e o fechamento mostraria um total parcial. Ele busca primeiro os dias da página, depois todas as vendas desses dias e os itens de todas elas — três consultas fixas, em vez de uma por venda dentro do laço de exibição.
 
+A tela de vendas também filtra por **período e busca** (cliente, nome de produto ou número da venda, com ou sem `#`). As condições são montadas uma vez, em `$condicoes`, e aplicadas a todas as consultas da tela: se a lista de dias e a de vendas filtrassem de jeitos diferentes, um dia apareceria com vendas que não batem com a busca. Os contadores dos botões Ativas/Canceladas/Todas respeitam período e busca, mas não a própria situação. Com busca ativa, o rodapé do dia vira "Total das vendas encontradas": é a soma de parte do dia, não o fechamento dele. `%` e `_` digitados são escapados antes do `LIKE`.
+
 ## Fluxos de estoque e venda
 
 O estoque é alterado em três lugares, todos dentro de `beginTransaction()`/`commit()`/`rollBack()`:

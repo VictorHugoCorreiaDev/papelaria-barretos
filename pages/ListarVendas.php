@@ -2,23 +2,98 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/csrf.php';
 require_once __DIR__ . '/../includes/pagamento.php';
+require_once __DIR__ . '/../includes/validacao.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 require_once __DIR__ . '/../includes/header.php';
 
-/* FILTRO DE SITUAÇÃO */
+/*
+ * FILTROS
+ *
+ * Situação, período e busca se combinam. As condições ficam montadas num
+ * lugar só e valem para todas as consultas abaixo: se a lista de dias
+ * filtrasse de um jeito e a lista de vendas de outro, um dia apareceria
+ * com vendas que não batem com a busca.
+ */
 
 $status = $_GET['status'] ?? 'ativa';
 
-$where = "";
-$params = [];
-
-if ($status === 'ativa' || $status === 'cancelada') {
-    $where = "WHERE v.status = :status";
-    $params[':status'] = $status;
-} else {
+if ($status !== 'ativa' && $status !== 'cancelada') {
     $status = 'todas';
 }
+
+// Período opcional: vazio significa sem limite daquele lado
+$dataInicio = dataValida($_GET['inicio'] ?? null, '');
+$dataFim = dataValida($_GET['fim'] ?? null, '');
+
+// Datas invertidas viram o intervalo que a pessoa quis dizer
+if ($dataInicio !== '' && $dataFim !== '' && $dataInicio > $dataFim) {
+    [$dataInicio, $dataFim] = [$dataFim, $dataInicio];
+}
+
+$busca = trim((string) ($_GET['busca'] ?? ''));
+$busca = mb_substr($busca, 0, 100);
+
+$condicoes = [];
+$params = [];
+
+// A coluna fica fora de função para o índice de data valer (migração 005)
+if ($dataInicio !== '') {
+    $condicoes[] = "v.created_at >= :inicio";
+    $params[':inicio'] = $dataInicio;
+}
+
+if ($dataFim !== '') {
+    $condicoes[] = "v.created_at < DATE_ADD(:fim, INTERVAL 1 DAY)";
+    $params[':fim'] = $dataFim;
+}
+
+if ($busca !== '') {
+    /*
+     * Uma caixa só procura em três lugares: nome do cliente, nome de um
+     * produto da venda e número da venda. É o que se tem na mão quando
+     * alguém volta ao balcão perguntando de uma compra.
+     *
+     * % e _ digitados são escapados para valerem como texto, não como
+     * curinga do LIKE.
+     */
+    $termo = '%' . addcslashes($busca, '%_\\') . '%';
+
+    $opcoes = [
+        "v.cliente LIKE :busca_cliente",
+        "EXISTS (
+            SELECT 1
+            FROM vendas_produtos vpb
+            JOIN produtos pb ON pb.id = vpb.produto_id
+            WHERE vpb.venda_id = v.id AND pb.nome LIKE :busca_produto
+        )",
+    ];
+    $params[':busca_cliente'] = $termo;
+    $params[':busca_produto'] = $termo;
+
+    // "123" ou "#123" também procuram pela venda de número 123
+    if (preg_match('/^#?(\d{1,10})$/', $busca, $m)) {
+        $opcoes[] = "v.id = :busca_id";
+        $params[':busca_id'] = (int) $m[1];
+    }
+
+    $condicoes[] = '(' . implode(' OR ', $opcoes) . ')';
+}
+
+// Os contadores dos botões de situação respeitam período e busca, mas não
+// a própria situação: cada botão mostra quantas vendas ele exibiria
+$condicoesSemStatus = $condicoes;
+$paramsSemStatus = $params;
+
+if ($status !== 'todas') {
+    $condicoes[] = "v.status = :status";
+    $params[':status'] = $status;
+}
+
+$where = $condicoes ? 'WHERE ' . implode(' AND ', $condicoes) : '';
+$whereSemStatus = $condicoesSemStatus ? 'WHERE ' . implode(' AND ', $condicoesSemStatus) : '';
+
+$filtrando = $busca !== '' || $dataInicio !== '' || $dataFim !== '';
 
 /*
  * PAGINAÇÃO POR DIA
@@ -67,39 +142,43 @@ $stmtDias->execute();
 $dias = $stmtDias->fetchAll(PDO::FETCH_COLUMN);
 
 /*
- * As vendas dos dias desta página, numa consulta só.
+ * As vendas dos dias desta página, numa consulta só, com os mesmos filtros
+ * da lista de dias.
  *
- * Os dias vêm da consulta acima, no formato Y-m-d do próprio MySQL, então
- * são valores seguros para montar o IN — ainda assim vão por placeholder,
- * para não abrir exceção ao padrão do resto do projeto.
+ * Os dias vêm da consulta acima, no formato Y-m-d do próprio MySQL, e vão
+ * por placeholder como todo o resto.
  */
 $vendas = [];
 $itensPorVenda = [];
 
 if (!empty($dias)) {
-    $marcadores = implode(',', array_fill(0, count($dias), '?'));
+    $paramsVendas = $params;
+    $marcadores = [];
 
-    $sqlVendas = "
+    foreach (array_values($dias) as $i => $d) {
+        $marcadores[] = ":dia$i";
+        $paramsVendas[":dia$i"] = $d;
+    }
+
+    // O intervalo vem junto da lista: é ele que deixa o MySQL usar o índice
+    // de data, e a lista garante que só entram os dias da página
+    $paramsVendas[':pagina_inicio'] = min($dias);
+    $paramsVendas[':pagina_fim'] = max($dias);
+
+    $condicoesVendas = array_merge($condicoes, [
+        "v.created_at >= :pagina_inicio",
+        "v.created_at < DATE_ADD(:pagina_fim, INTERVAL 1 DAY)",
+        "DATE(v.created_at) IN (" . implode(',', $marcadores) . ")",
+    ]);
+
+    $stmtVendas = $conn->prepare("
         SELECT v.id, v.total, v.desconto, v.cliente, v.forma_pagamento, v.created_at, v.status,
                DATE(v.created_at) AS dia
         FROM vendas v
-        WHERE v.created_at >= ? AND v.created_at < DATE_ADD(?, INTERVAL 1 DAY)
-          AND DATE(v.created_at) IN ($marcadores)
-    ";
-
-    // O intervalo vem antes da lista: é ele que deixa o MySQL usar o índice
-    // de data, e a lista continua garantindo que só entram os dias da página
-    $valores = array_merge([min($dias), max($dias)], $dias);
-
-    if ($status !== 'todas') {
-        $sqlVendas .= " AND v.status = ?";
-        $valores[] = $status;
-    }
-
-    $sqlVendas .= " ORDER BY v.created_at DESC";
-
-    $stmtVendas = $conn->prepare($sqlVendas);
-    $stmtVendas->execute($valores);
+        WHERE " . implode(' AND ', $condicoesVendas) . "
+        ORDER BY v.created_at DESC
+    ");
+    $stmtVendas->execute($paramsVendas);
     $vendas = $stmtVendas->fetchAll(PDO::FETCH_ASSOC);
 
     /*
@@ -123,6 +202,42 @@ if (!empty($dias)) {
             $itensPorVenda[$item['venda_id']][] = $item;
         }
     }
+}
+
+/*
+ * CONTADORES E TOTAL DO FILTRO
+ *
+ * Uma consulta devolve as três contagens dos botões e o faturamento das
+ * vendas ativas encontradas, este último só exibido quando há filtro.
+ * Canceladas ficam fora do valor, como em todo o sistema.
+ */
+$stmtContagem = $conn->prepare("
+    SELECT
+        COALESCE(SUM(v.status = 'ativa'), 0) AS ativas,
+        COALESCE(SUM(v.status = 'cancelada'), 0) AS canceladas,
+        COUNT(*) AS todas,
+        COALESCE(SUM(CASE WHEN v.status = 'ativa' THEN v.total END), 0) AS faturado
+    FROM vendas v
+    $whereSemStatus
+");
+$stmtContagem->execute($paramsSemStatus);
+$contagem = $stmtContagem->fetch(PDO::FETCH_ASSOC);
+
+$countAtivas = (int) $contagem['ativas'];
+$countCanceladas = (int) $contagem['canceladas'];
+$countTodas = (int) $contagem['todas'];
+$faturadoFiltro = (float) $contagem['faturado'];
+
+/* Filtros que viajam nos links de situação e de paginação */
+$filtrosUrl = '';
+if ($busca !== '') {
+    $filtrosUrl .= '&busca=' . urlencode($busca);
+}
+if ($dataInicio !== '') {
+    $filtrosUrl .= '&inicio=' . urlencode($dataInicio);
+}
+if ($dataFim !== '') {
+    $filtrosUrl .= '&fim=' . urlencode($dataFim);
 }
 
 /*
@@ -171,12 +286,6 @@ foreach ($vendas as $venda) {
     }
 }
 
-/* CONTADORES DOS FILTROS */
-
-$countAtivas = (int) $conn->query("SELECT COUNT(*) FROM vendas WHERE status = 'ativa'")->fetchColumn();
-$countCanceladas = (int) $conn->query("SELECT COUNT(*) FROM vendas WHERE status = 'cancelada'")->fetchColumn();
-$countTodas = (int) $conn->query("SELECT COUNT(*) FROM vendas")->fetchColumn();
-
 /* Data por extenso, montada à mão pelo mesmo motivo do dashboard:
    strftime está depreciado e o locale pt_BR não existe na hospedagem */
 $diasSemana = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira',
@@ -194,20 +303,50 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
 
 <h2>Vendas</h2>
 
+<!-- BUSCA E PERÍODO -->
+<form method="GET" class="card busca-vendas">
+    <!-- Mantém a situação escolhida ao buscar -->
+    <input type="hidden" name="status" value="<?= htmlspecialchars($status) ?>">
+
+    <div class="form-group busca-vendas-texto">
+        <label for="buscaVendas">Buscar</label>
+        <input type="search" id="buscaVendas" name="busca" maxlength="100"
+            value="<?= htmlspecialchars($busca) ?>"
+            placeholder="Cliente, produto ou nº da venda">
+    </div>
+
+    <div class="form-group">
+        <label for="inicioVendas">De</label>
+        <input type="date" id="inicioVendas" name="inicio" value="<?= htmlspecialchars($dataInicio) ?>">
+    </div>
+
+    <div class="form-group">
+        <label for="fimVendas">Até</label>
+        <input type="date" id="fimVendas" name="fim" value="<?= htmlspecialchars($dataFim) ?>">
+    </div>
+
+    <div class="busca-vendas-acoes">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <?php if ($filtrando): ?>
+            <a href="?status=<?= urlencode($status) ?>" class="btn btn-secondary">Limpar</a>
+        <?php endif; ?>
+    </div>
+</form>
+
 <!-- FILTROS -->
 <div class="filtros-vendas">
 
-    <a href="?status=ativa"
+    <a href="?status=ativa<?= $filtrosUrl ?>"
         class="btn btn-sm <?= $status == 'ativa' ? 'btn-primary' : 'btn-secondary' ?>">
         Ativas (<?= $countAtivas ?>)
     </a>
 
-    <a href="?status=cancelada"
+    <a href="?status=cancelada<?= $filtrosUrl ?>"
         class="btn btn-sm <?= $status == 'cancelada' ? 'btn-primary' : 'btn-secondary' ?>">
         Canceladas (<?= $countCanceladas ?>)
     </a>
 
-    <a href="?status=todas"
+    <a href="?status=todas<?= $filtrosUrl ?>"
         class="btn btn-sm <?= $status == 'todas' ? 'btn-primary' : 'btn-secondary' ?>">
         Todas (<?= $countTodas ?>)
     </a>
@@ -217,7 +356,11 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
 <?php if (empty($porDia)): ?>
 
     <div class="card">
-        <p style="color: var(--text-gray);">Nenhuma venda encontrada.</p>
+        <p style="color: var(--text-gray);">
+            <?= $filtrando
+                ? 'Nenhuma venda encontrada com esses filtros.'
+                : 'Nenhuma venda encontrada.' ?>
+        </p>
     </div>
 
 <?php else: ?>
@@ -225,6 +368,10 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
     <p class="periodo-atual">
         Mostrando <strong><?= count($porDia) ?></strong>
         de <strong><?= $totalDias ?></strong> dia(s) com venda
+        <?php if ($filtrando && $status !== 'cancelada'): ?>
+            · <strong>R$ <?= number_format($faturadoFiltro, 2, ',', '.') ?></strong>
+            em vendas ativas no filtro
+        <?php endif; ?>
     </p>
 
     <?php foreach ($porDia as $dia => $grupo): ?>
@@ -323,7 +470,11 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
 
             <!-- FECHAMENTO -->
             <div class="dia-fechamento">
-                <span>Fechamento do dia</span>
+                <?php
+                // Com busca, o total é das vendas encontradas e não do dia
+                // inteiro: chamar isso de fechamento seria inventar um caixa
+                ?>
+                <span><?= $busca !== '' ? 'Total das vendas encontradas' : 'Fechamento do dia' ?></span>
                 <?php if ($grupo['quantidadeAtivas'] > 0): ?>
                     <span>Vendas <strong>R$ <?= number_format($grupo['faturamento'], 2, ',', '.') ?></strong></span>
                 <?php else: ?>
@@ -340,18 +491,18 @@ function dataPorExtenso($dia, $diasSemana, $mesesNome)
         <div class="paginacao">
 
             <?php if ($page > 1): ?>
-                <a href="?status=<?= urlencode($status) ?>&page=<?= $page - 1 ?>" class="pag-btn">«</a>
+                <a href="?status=<?= urlencode($status) ?><?= $filtrosUrl ?>&page=<?= $page - 1 ?>" class="pag-btn">«</a>
             <?php endif; ?>
 
             <?php for ($i = 1; $i <= $totalPaginas; $i++): ?>
-                <a href="?status=<?= urlencode($status) ?>&page=<?= $i ?>"
+                <a href="?status=<?= urlencode($status) ?><?= $filtrosUrl ?>&page=<?= $i ?>"
                     class="pag-btn <?= $i == $page ? 'active' : '' ?>">
                     <?= $i ?>
                 </a>
             <?php endfor; ?>
 
             <?php if ($page < $totalPaginas): ?>
-                <a href="?status=<?= urlencode($status) ?>&page=<?= $page + 1 ?>" class="pag-btn">»</a>
+                <a href="?status=<?= urlencode($status) ?><?= $filtrosUrl ?>&page=<?= $page + 1 ?>" class="pag-btn">»</a>
             <?php endif; ?>
 
         </div>

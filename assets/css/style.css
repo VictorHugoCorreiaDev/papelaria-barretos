@@ -1388,6 +1388,34 @@ body.login-page::after {
     margin-bottom: 20px;
 }
 
+/* Busca e período da tela de vendas: numa linha no computador, empilhados
+   no celular pelo flex-wrap, sem media query própria */
+.busca-vendas {
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.busca-vendas .form-group {
+    margin: 0;
+}
+
+/* Sem a margem padrão dos campos, que deixava os botões 16px abaixo deles */
+.busca-vendas input {
+    margin-bottom: 0;
+}
+
+.busca-vendas-texto {
+    flex: 1 1 260px;
+}
+
+.busca-vendas-acoes {
+    display: flex;
+    gap: 10px;
+}
+
 .dia-vendas {
     margin-bottom: 25px;
     padding-top: 0;
