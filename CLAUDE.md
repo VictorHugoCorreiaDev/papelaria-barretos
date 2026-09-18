@@ -249,6 +249,14 @@ Esse script fica **antes da tag do CSS e fora do `funcoes.js`** de propósito: s
 
 Sem escolha salva, vale a preferência do sistema operacional (`prefers-color-scheme`). Todo acesso ao `localStorage` está em `try/catch` — em janela anônima ou com armazenamento bloqueado ele lança exceção, e sem a proteção a página inteira pararia.
 
+## Aviso de "site perigoso" do Google
+
+O Google Safe Browsing marcou o subdomínio como **engenharia social** (página que tentaria roubar dados). Não houve invasão: é o que costuma acontecer com tela de login em subdomínio gratuito, formato muito usado em golpes. O domínio da hospedagem como um todo não está marcado, só este endereço.
+
+Por isso a tela de login se identifica ("Sistema interno — vendas e estoque da Bazar e Papelaria Barretos, acesso restrito à equipe") e nenhuma página é indexada: o `.htaccess` manda `X-Robots-Tag: noindex, nofollow` (dentro de `IfModule`, para não dar erro 500 sem o `mod_headers`) e o `login.php` e o `header.php` repetem a instrução em meta tag. **Não volte a deixar a tela de login só com "Entrar", usuário e senha.**
+
+A remoção do aviso é pedida pelo Google Search Console (Segurança e ações manuais → Problemas de segurança → Solicitar revisão). A solução definitiva é um domínio próprio: subdomínio gratuito compartilhado herda a má reputação dos vizinhos e pode ser marcado de novo.
+
 ## Menu em telas estreitas e impressão
 
 Abaixo de 900px a sidebar sai do fluxo e vira um painel deslizante, aberto pelo botão `.abrir-menu` (`alternarMenu()` no `funcoes.js`). Antes dessa mudança a regra era `display:none` puro: no celular o sistema ficava **sem navegação e sem botão de sair**. O painel fecha no véu, no Esc e ao tocar num item.

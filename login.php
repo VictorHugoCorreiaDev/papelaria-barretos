@@ -50,11 +50,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
-    <title>Login - Papelaria Barretos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sistema interno — Bazar e Papelaria Barretos</title>
+
+    <?php
+    /*
+     * Sistema interno: não precisa aparecer em busca nenhuma. O .htaccess
+     * já manda o cabeçalho X-Robots-Tag para todas as páginas; a meta tag
+     * repete a instrução caso o servidor não tenha o mod_headers.
+     */
+    ?>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Sistema interno de vendas e estoque da Bazar e Papelaria Barretos. Acesso restrito à equipe da loja.">
 
     <?php
     // Mesmo script do header.php: a tela de login também respeita o tema
@@ -91,7 +102,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-card">
         <img src="/assets/img/logo.webp" alt="Bazar e Papelaria Barretos">
 
-        <h2>Entrar</h2>
+        <?php
+        /*
+         * Uma tela só com "Entrar", usuário e senha, num subdomínio gratuito,
+         * é exatamente o que o Google procura ao caçar páginas falsas de
+         * login. Dizer de quem é o sistema e para quem ele serve ajuda a
+         * revisão da Navegação Segura e quem chega aqui por engano.
+         */
+        ?>
+        <h2>Sistema interno</h2>
+        <p class="login-identificacao">
+            Vendas e estoque da <strong>Bazar e Papelaria Barretos</strong>.
+            Acesso restrito à equipe da loja.
+        </p>
 
         <?php if ($erro): ?>
             <div class="login-erro" role="alert">
@@ -104,6 +127,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 type="text"
                 name="usuario"
                 placeholder="Usuário"
+                aria-label="Usuário"
+                autocomplete="username"
                 class="input"
                 value="<?= htmlspecialchars($usuario ?? '') ?>"
                 required>
@@ -112,6 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 type="password"
                 name="senha"
                 placeholder="Senha"
+                aria-label="Senha"
+                autocomplete="current-password"
                 class="input"
                 required>
 

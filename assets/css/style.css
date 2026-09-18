@@ -2071,3 +2071,11 @@ body.login-page::after {
     font-size: 12px;
     color: var(--text-gray);
 }
+
+/* Identificação do sistema na tela de login */
+.login-card .login-identificacao {
+    margin: calc(-1 * var(--space-4)) 0 var(--space-6);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-gray);
+}

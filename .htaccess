@@ -9,6 +9,13 @@ RewriteEngine On
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# Sistema interno: nenhuma página deve aparecer na busca. O cabeçalho vale
+# para tudo o que o servidor entrega; o IfModule evita erro 500 se a
+# hospedagem não tiver o mod_headers (as páginas têm a meta tag de reserva).
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>
+
 # Impede que o servidor liste o conteúdo de diretórios sem index
 Options -Indexes
 
