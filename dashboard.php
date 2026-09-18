@@ -524,14 +524,27 @@ $ultimasVendas = $conn->query("
 
                 <select name="produto_id" id="produto" class="input">
                     <?php
-                    $produtos = $conn->query("SELECT id, nome, preco, quantidade FROM produtos");
+                    /*
+                     * Produto sem estoque continua na lista, desabilitado e no
+                     * fim: escondido, a pessoa procuraria e acharia que o
+                     * cadastro sumiu; habilitado, só descobriria o problema
+                     * depois de preencher tudo e tentar vender.
+                     */
+                    $produtos = $conn->query("
+                        SELECT id, nome, preco, quantidade
+                        FROM produtos
+                        ORDER BY quantidade <= 0, nome
+                    ");
                     foreach ($produtos as $p):
+                        $semEstoque = $p['quantidade'] <= 0;
                     ?>
                         <option
                             value="<?= (int) $p['id'] ?>"
                             data-preco="<?= htmlspecialchars($p['preco']) ?>"
-                            data-estoque="<?= (int) $p['quantidade'] ?>">
-                            <?= htmlspecialchars($p['nome']) ?> (Estoque: <?= (int) $p['quantidade'] ?>)
+                            data-estoque="<?= (int) $p['quantidade'] ?>"
+                            <?= $semEstoque ? 'disabled' : '' ?>>
+                            <?= htmlspecialchars($p['nome']) ?>
+                            <?= $semEstoque ? '— sem estoque' : '(Estoque: ' . (int) $p['quantidade'] . ')' ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

@@ -114,6 +114,14 @@ form?.addEventListener('submit', function (e) {
                         "Estoque: " + data.novoEstoque
                     );
 
+                // Vendeu a última unidade: a opção fica como as que já vêm
+                // zeradas do servidor, desabilitada
+                if (data.novoEstoque <= 0) {
+                    selectedOption.disabled = true;
+                    selectedOption.textContent = selectedOption.textContent
+                        .replace(/\(Estoque:\s*-?\d+\)/, "— sem estoque");
+                }
+
                 // 🔥 Atualizar CARDS
                 atualizarCards(data.cards);
 
@@ -324,10 +332,14 @@ function ativarBuscaProduto(idCampo, idSelect, idContador) {
 
         encontrados.forEach(o => select.appendChild(o.cloneNode(true)));
 
-        // Com um resultado só, ou com busca em andamento, já seleciona o
-        // primeiro produto para o valor unitário aparecer sem mais cliques
-        if (termo !== '' && encontrados.length > 0) {
-            select.selectedIndex = placeholder ? 1 : 0;
+        // Com busca em andamento, já seleciona o primeiro produto disponível
+        // para o valor unitário aparecer sem mais cliques. Os sem estoque
+        // vêm desabilitados e não podem ser a escolha automática.
+        if (termo !== '') {
+            const primeiro = [...select.options].find(o => o.value !== '' && !o.disabled);
+            if (primeiro) {
+                select.value = primeiro.value;
+            }
         }
 
         if (contador) {

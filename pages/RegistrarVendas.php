@@ -222,8 +222,9 @@ if (isset($_POST['finalizar'])) {
 }
 
 
-// Buscar produtos para o select
-$produtos = $conn->query("SELECT * FROM produtos")->fetchAll();
+// Produtos para o select. Os sem estoque vão para o fim e entram
+// desabilitados, pelo mesmo motivo da venda rápida no dashboard
+$produtos = $conn->query("SELECT * FROM produtos ORDER BY quantidade <= 0, nome")->fetchAll();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -246,10 +247,14 @@ require_once __DIR__ . '/../includes/header.php';
 
             <select name="produto_id" id="produtoCarrinho" required>
                 <option value="">Selecione</option>
-                <?php foreach ($produtos as $p): ?>
+                <?php foreach ($produtos as $p):
+                    $semEstoque = $p['quantidade'] <= 0;
+                ?>
                     <option value="<?= (int) $p['id'] ?>"
-                        data-estoque="<?= (int) $p['quantidade'] ?>">
-                        <?= htmlspecialchars($p['nome']) ?> (Estoque: <?= (int) $p['quantidade'] ?>)
+                        data-estoque="<?= (int) $p['quantidade'] ?>"
+                        <?= $semEstoque ? 'disabled' : '' ?>>
+                        <?= htmlspecialchars($p['nome']) ?>
+                        <?= $semEstoque ? '— sem estoque' : '(Estoque: ' . (int) $p['quantidade'] . ')' ?>
                     </option>
                 <?php endforeach; ?>
             </select>

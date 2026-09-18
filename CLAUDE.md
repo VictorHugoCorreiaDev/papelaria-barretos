@@ -173,6 +173,8 @@ O `ativarBuscaProduto()` do `funcoes.js` liga um campo de texto a um `<select>` 
 
 O `<select>` continua sendo o campo enviado no formulário: o `atualizarValores()` lê `data-preco` e `data-estoque` da opção escolhida, e o elemento nativo funciona por teclado sem trabalho extra. O filtro guarda uma cópia de todas as opções ao iniciar, porque remove e recria os `<option>` a cada busca — esconder com `display:none` não funciona em todos os navegadores. A comparação ignora acentos, então "lapis" encontra "Lápis".
 
+Produtos com estoque zero ou negativo continuam nos dois `<select>`, mas **desabilitados**, marcados "— sem estoque" e no fim da lista (`ORDER BY quantidade <= 0, nome`). Escondidos, a pessoa procuraria e concluiria que o cadastro sumiu; habilitados, só descobriria o problema depois de preencher a venda. A seleção automática da busca pula as opções desabilitadas, e a venda rápida desabilita na hora a opção cujo estoque acabou de zerar. A recusa de verdade continua no servidor, pela baixa condicional de estoque.
+
 ## Carregamento do JavaScript
 
 O `footer.php` é o único lugar que carrega o `funcoes.js`, e toda página o inclui ao final. Não acrescente uma tag `<script>` própria: o arquivo registra o listener de submit do `#formVenda` no escopo global, então um segundo carregamento faria a venda rápida ser enviada duas vezes.
