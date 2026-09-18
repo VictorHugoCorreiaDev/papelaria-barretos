@@ -1060,43 +1060,163 @@ body.login-page::after {
     filter: brightness(0) invert(1);
 }
 
-.login-card {
+/* Painel do login: sem cartão, alinhado à esquerda, como uma folha de
+   entrada. A marca d'água do fundo continua fazendo o papel de ilustração */
+.login-painel {
     position: relative;
     z-index: 1;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-1);
-    width: 380px;
+    width: 400px;
     max-width: calc(100% - var(--space-8));
-    padding: var(--space-10) var(--space-8);
-    border-radius: var(--r-xl);
-    text-align: center;
-}
-
-.login-card img {
-    width: 160px;
-    max-width: 100%;
-    height: auto;
-    margin-bottom: var(--space-6);
-}
-
-[data-theme="dark"] .login-card img {
-    filter: brightness(0) invert(1);
-}
-
-.login-card h2 {
-    margin-bottom: var(--space-6);
-    font-size: var(--fs-24);
-    color: var(--fg-1);
-}
-
-.login-card input {
+    padding: var(--space-10) 0;
     text-align: left;
 }
 
-.login-card .btn {
+.login-logo {
+    display: block;
+    width: 132px;
+    height: auto;
+    margin-bottom: var(--space-8);
+}
+
+[data-theme="dark"] .login-logo {
+    filter: brightness(0) invert(1);
+}
+
+.login-sobretitulo {
+    margin: 0 0 var(--space-3);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+}
+
+.login-titulo {
+    margin: 0 0 var(--space-3);
+    font-family: var(--font-display);
+    font-size: var(--fs-40);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--fg-1);
+}
+
+.login-subtitulo {
+    margin: 0 0 var(--space-8);
+    font-size: var(--fs-14);
+    line-height: 1.5;
+    color: var(--fg-3);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.login-campo label {
+    display: block;
+    margin-bottom: var(--space-2);
+    font-size: var(--fs-12);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-2);
+}
+
+.login-rotulo-linha {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.login-esqueceu {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: var(--fs-13);
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.login-esqueceu:hover {
+    text-decoration: underline;
+}
+
+/* Campo com ícone: a borda e o foco ficam no contêiner, não no input */
+.login-input {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0 var(--space-4);
+    background: var(--bg-raised);
+    border: 1px solid var(--border-1);
+    border-radius: var(--r-lg);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.login-input:focus-within {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-focus);
+}
+
+.login-input svg {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--fg-4);
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.login-input input {
+    flex: 1;
+    min-width: 0;
+    height: 50px;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    font-size: var(--fs-16);
+    color: var(--fg-1);
+    outline: none;
+}
+
+.login-input input:focus {
+    border: none;
+    box-shadow: none;
+}
+
+.login-ajuda {
+    margin: var(--space-2) 0 0;
+    font-size: var(--fs-13);
+    line-height: 1.5;
+    color: var(--fg-3);
+}
+
+.login-botao {
     width: 100%;
+    height: 50px;
     justify-content: center;
     margin-top: var(--space-2);
+    border-radius: var(--r-lg);
+    font-size: var(--fs-16);
+}
+
+.login-rodape {
+    margin: var(--space-6) 0 0;
+    text-align: center;
+    font-size: var(--fs-14);
+    color: var(--fg-3);
+}
+
+.login-rodape strong {
+    color: var(--fg-1);
+    font-weight: 600;
 }
 
 .login-erro {
@@ -2072,10 +2192,9 @@ body.login-page::after {
     color: var(--text-gray);
 }
 
-/* Identificação do sistema na tela de login */
-.login-card .login-identificacao {
-    margin: calc(-1 * var(--space-4)) 0 var(--space-6);
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--text-gray);
+/* Em tela de celular a marca d'água do login fica atrás do texto e embaralha a leitura */
+@media (max-width: 600px) {
+    body.login-page::after {
+        display: none;
+    }
 }

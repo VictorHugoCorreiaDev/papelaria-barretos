@@ -253,7 +253,9 @@ Sem escolha salva, vale a preferência do sistema operacional (`prefers-color-sc
 
 O Google Safe Browsing marcou o subdomínio como **engenharia social** (página que tentaria roubar dados). Não houve invasão: é o que costuma acontecer com tela de login em subdomínio gratuito, formato muito usado em golpes. O domínio da hospedagem como um todo não está marcado, só este endereço.
 
-Por isso a tela de login se identifica ("Sistema interno — vendas e estoque da Bazar e Papelaria Barretos, acesso restrito à equipe") e nenhuma página é indexada: o `.htaccess` manda `X-Robots-Tag: noindex, nofollow` (dentro de `IfModule`, para não dar erro 500 sem o `mod_headers`) e o `login.php` e o `header.php` repetem a instrução em meta tag. **Não volte a deixar a tela de login só com "Entrar", usuário e senha.**
+Por isso a tela de login se identifica ("Sistema interno — vendas e estoque da Bazar e Papelaria Barretos, acesso restrito à equipe") e nenhuma página é indexada: o `.htaccess` manda `X-Robots-Tag: noindex, nofollow` (dentro de `IfModule`, para não dar erro 500 sem o `mod_headers`) e o `login.php` e o `header.php` repetem a instrução em meta tag. **Não volte a deixar a tela de login só com "Entrar", usuário e senha**: o sobretítulo "Sistema interno · Bazar e Papelaria Barretos" e o subtítulo com "acesso restrito à equipe" ficam de propósito.
+
+A tela de login não tem "criar conta" nem recuperação de senha por e-mail (o sistema não guarda e-mail). O "Esqueceu?" só mostra que um administrador redefine a senha em Configurações → Usuários, e o rodapé orienta a falar com o administrador para ter acesso.
 
 A remoção do aviso é pedida pelo Google Search Console (Segurança e ações manuais → Problemas de segurança → Solicitar revisão). A solução definitiva é um domínio próprio: subdomínio gratuito compartilhado herda a má reputação dos vizinhos e pode ser marcado de novo.
 

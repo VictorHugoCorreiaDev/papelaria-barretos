@@ -99,21 +99,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body class="login-page">
-    <div class="login-card">
-        <img src="/assets/img/logo.webp" alt="Bazar e Papelaria Barretos">
+    <main class="login-painel">
+
+        <img src="/assets/img/logo.webp" alt="Bazar e Papelaria Barretos" class="login-logo">
 
         <?php
         /*
-         * Uma tela só com "Entrar", usuário e senha, num subdomínio gratuito,
-         * é exatamente o que o Google procura ao caçar páginas falsas de
-         * login. Dizer de quem é o sistema e para quem ele serve ajuda a
-         * revisão da Navegação Segura e quem chega aqui por engano.
+         * A identificação do sistema fica visível de propósito: uma tela só
+         * com usuário e senha num subdomínio gratuito é o formato que o
+         * Google procura ao caçar páginas falsas de login (foi o que levou
+         * ao aviso de "site perigoso"). Não enxugue este texto.
          */
         ?>
-        <h2>Sistema interno</h2>
-        <p class="login-identificacao">
-            Vendas e estoque da <strong>Bazar e Papelaria Barretos</strong>.
-            Acesso restrito à equipe da loja.
+        <p class="login-sobretitulo">Sistema interno · Bazar e Papelaria Barretos</p>
+        <h1 class="login-titulo">Bem-vindo de volta.</h1>
+        <p class="login-subtitulo">
+            Acesse o painel de vendas e estoque da loja. Acesso restrito à equipe.
         </p>
 
         <?php if ($erro): ?>
@@ -122,31 +123,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         <?php endif; ?>
 
-        <form method="POST">
-            <input
-                type="text"
-                name="usuario"
-                placeholder="Usuário"
-                aria-label="Usuário"
-                autocomplete="username"
-                class="input"
-                value="<?= htmlspecialchars($usuario ?? '') ?>"
-                required>
+        <form method="POST" class="login-form">
 
-            <input
-                type="password"
-                name="senha"
-                placeholder="Senha"
-                aria-label="Senha"
-                autocomplete="current-password"
-                class="input"
-                required>
+            <div class="login-campo">
+                <label for="usuarioLogin">Usuário</label>
+                <div class="login-input">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" />
+                    </svg>
+                    <input
+                        type="text"
+                        id="usuarioLogin"
+                        name="usuario"
+                        autocomplete="username"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        value="<?= htmlspecialchars($usuario ?? '') ?>"
+                        required
+                        autofocus>
+                </div>
+            </div>
 
-            <button type="submit" class="btn btn-primary">
+            <div class="login-campo">
+                <div class="login-rotulo-linha">
+                    <label for="senhaLogin">Sua senha</label>
+
+                    <?php
+                    // Não há recuperação por e-mail (o sistema não guarda e-mail):
+                    // o caminho real é um administrador redefinir a senha
+                    ?>
+                    <button type="button" class="login-esqueceu"
+                        aria-expanded="false" aria-controls="ajudaSenha"
+                        onclick="var a = document.getElementById('ajudaSenha'); a.hidden = !a.hidden; this.setAttribute('aria-expanded', String(!a.hidden));">
+                        Esqueceu?
+                    </button>
+                </div>
+
+                <div class="login-input">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="5" y="11" width="14" height="10" rx="2" />
+                        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                    </svg>
+                    <input
+                        type="password"
+                        id="senhaLogin"
+                        name="senha"
+                        autocomplete="current-password"
+                        required>
+                </div>
+
+                <p class="login-ajuda" id="ajudaSenha" hidden>
+                    Peça a um administrador da loja para redefinir sua senha em
+                    <strong>Configurações → Usuários</strong>.
+                </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary login-botao">
                 Entrar
             </button>
         </form>
-    </div>
+
+        <?php
+        // Sem "criar conta": o site é público, e cadastro aberto deixaria
+        // qualquer pessoa ver o financeiro da loja (veja pages/Usuarios.php)
+        ?>
+        <p class="login-rodape">
+            Ainda não possui acesso? <strong>Fale com o administrador da loja.</strong>
+        </p>
+
+    </main>
 </body>
 
 
