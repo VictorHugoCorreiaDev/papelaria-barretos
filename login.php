@@ -101,8 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="login-page">
     <main class="login-painel">
 
-        <img src="/assets/img/logo.webp" alt="Bazar e Papelaria Barretos" class="login-logo">
-
         <h1 class="login-titulo">Bem-vindo de volta.</h1>
 
         <?php

@@ -1060,8 +1060,8 @@ body.login-page::after {
     filter: brightness(0) invert(1);
 }
 
-/* Painel do login: cartão com borda, conteúdo alinhado à esquerda e só a
-   logo centralizada */
+/* Painel do login: cartão com borda e conteúdo alinhado à esquerda. A
+   marca aparece na marca d'água do fundo e no nome da loja no subtítulo */
 .login-painel {
     position: relative;
     z-index: 1;
@@ -1072,17 +1072,6 @@ body.login-page::after {
     border: 1px solid var(--border-1);
     border-radius: var(--r-xl);
     text-align: left;
-}
-
-.login-logo {
-    display: block;
-    width: 150px;
-    height: auto;
-    margin: 0 auto var(--space-8);
-}
-
-[data-theme="dark"] .login-logo {
-    filter: brightness(0) invert(1);
 }
 
 .login-titulo {
