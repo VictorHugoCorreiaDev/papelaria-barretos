@@ -2,6 +2,7 @@
 session_start();
 require 'Conexao.php';
 require_once __DIR__ . '/includes/configuracao.php';
+require_once __DIR__ . '/includes/login_tentativas.php';
 
 // Já autenticado: não faz sentido mostrar o formulário de novo
 if (isset($_SESSION['usuario'])) {
@@ -16,18 +17,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = $_POST['usuario'] ?? '';
     $senha   = $_POST['senha'] ?? '';
 
-    $stmt = $conn->prepare("SELECT * FROM usuarios WHERE usuario = ?");
-    $stmt->execute([$usuario]);
-    $user = $stmt->fetch();
+    // Antes de conferir a senha: este IP ainda tem tentativas?
+    $bloqueio = minutosDeBloqueio($conn);
 
-    if ($user && password_verify($senha, $user['senha'])) {
-        // Novo id de sessão a cada login, contra fixação de sessão
-        session_regenerate_id(true);
-
-        $_SESSION['usuario'] = $user['usuario'];
-        header("Location: /dashboard.php");
-        exit;
+    if ($bloqueio > 0) {
+        $erro = "Muitas tentativas sem sucesso. Tente de novo em $bloqueio minuto"
+            . ($bloqueio == 1 ? '' : 's') . '.';
     } else {
+
+        $stmt = $conn->prepare("SELECT * FROM usuarios WHERE usuario = ?");
+        $stmt->execute([$usuario]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($senha, $user['senha'])) {
+            // Novo id de sessão a cada login, contra fixação de sessão
+            session_regenerate_id(true);
+            limparTentativasDeLogin($conn);
+
+            $_SESSION['usuario'] = $user['usuario'];
+            header("Location: /dashboard.php");
+            exit;
+        }
+
+        // Mesma mensagem para usuário inexistente e senha errada: dizer qual
+        // dos dois falhou entrega metade do login a quem está tentando
+        registrarFalhaDeLogin($conn, $usuario);
         $erro = "Usuário ou senha inválidos";
     }
 }

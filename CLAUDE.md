@@ -31,6 +31,7 @@ Não há arquivo `.sql` de schema, mas o `README.md` traz o DDL das quatro tabel
 - `vendas(id, total, desconto, cliente, forma_pagamento, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas. **`total` é o valor líquido**, o que de fato entrou no caixa: é ele que alimenta faturamento e lucro em todas as telas. O `desconto` fica registrado à parte, para consulta; o valor bruto, quando precisar, é `total + desconto`.
 - `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario, custo_unitario)` — congelam preço e custo no momento da venda, de modo que totais e lucros históricos sobrevivem a alterações de preço ou de custo.
 - `despesas(id, descricao, categoria, valor, data_despesa, forma_pagamento, observacao, created_at)` — gastos do negócio. Não tem relação com vendas nem com estoque, e por isso pode ser excluída de fato, diferente de venda. As categorias são uma lista fixa em `includes/despesa.php`: texto livre faria "Energia", "energia" e "Luz" virarem três grupos no relatório.
+- `tentativas_login(id, usuario, ip, created_at)` — falhas de login recentes, usadas pelo limite de tentativas (veja a seção própria).
 
 ## Estrutura das páginas
 
@@ -72,6 +73,17 @@ Toda rota é protegida, e há duas guardas conforme o tipo de resposta:
 - `includes/auth_ajax.php` — para os endpoints em `ajax/`. Responde `401` com JSON em vez de redirecionar; um redirect seria seguido silenciosamente pelo `fetch()` e o JavaScript acabaria injetando a tela de login no modal ou tentando parsear HTML como JSON. O tratamento do 401 é a função `sessaoExpirada()` em `funcoes.js`, que avisa e devolve o usuário ao login.
 
 Ao criar uma página ou endpoint novo, inclua a guarda correspondente antes de qualquer outra coisa. Só `login.php` fica fora (senão não haveria como autenticar).
+
+## Limite de tentativas no login
+
+O `includes/login_tentativas.php` bloqueia o login por 15 minutos depois de 5 falhas vindas do mesmo IP. Durante o bloqueio, nem a senha certa entra, senão o limite não serviria de nada. Um login bem-sucedido apaga as falhas daquele IP.
+
+- A contagem fica na tabela `tentativas_login`, e não na sessão: quem tenta adivinhar a senha descartaria o cookie a cada tentativa.
+- O bloqueio é **por IP, não por usuário**. Bloquear o usuário deixaria qualquer pessoa trancar a dona da loja para fora do sistema, só errando a senha dela cinco vezes.
+- O IP vem só do `REMOTE_ADDR`. Cabeçalhos como `X-Forwarded-For` são escritos pelo próprio cliente, e confiar neles anularia o limite.
+- As linhas com mais de um dia são apagadas a cada falha registrada, porque a hospedagem compartilhada não oferece tarefa agendada.
+
+Usuário inexistente e senha errada recebem a mesma mensagem, de propósito.
 
 ## Ações destrutivas
 
@@ -132,6 +144,14 @@ O comparativo dos últimos seis meses no dashboard roda três consultas por mês
 ## Migrações
 
 `migracoes/` guarda os `.sql` de alteração de schema, numerados na ordem de aplicação. Não há ferramenta de migração: rode o arquivo à mão em cada ambiente. **Aplique em produção antes de publicar o código que usa as colunas novas** — o deploy é automático no push, e código novo contra schema antigo derruba o site.
+
+`vendas.created_at` e `despesas.data_despesa` têm índice (migração `005`), porque quase toda tela filtra por período. **No `WHERE`, compare a coluna direto, nunca `DATE(created_at)`**: envolver a coluna numa função impede o MySQL de usar o índice, e ele volta a ler a tabela inteira. As formas em uso:
+
+- período: `created_at >= :inicio AND created_at < DATE_ADD(:fim, INTERVAL 1 DAY)`
+- hoje: `created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY`
+- um dia (`FechamentoCaixa.php`): `created_at >= :dia AND created_at < :dia_seguinte`, com `$diaSeguinte` calculado no PHP para não repetir o mesmo placeholder
+
+O resultado é idêntico ao do `DATE()`, porque a comparação acontece no fuso da sessão. No `SELECT` e no `GROUP BY` o `DATE()` continua valendo: ali ele só formata o que já foi filtrado.
 
 ## Cache dos arquivos estáticos
 
