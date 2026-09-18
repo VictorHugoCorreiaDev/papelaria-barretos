@@ -164,9 +164,13 @@ A hospedagem responde CSS e JS com `Cache-Control: max-age=2592000` — trinta d
 
 ## Desconto na venda
 
-O desconto é único, sobre o total, aplicado na finalização do carrinho (a venda rápida não tem). Os dois campos da tela — reais e percentual — são espelhos ligados pelo `ativarDesconto()` do `funcoes.js`; só o de reais tem `name`, então é o único enviado.
+O desconto é único, sobre o total, e existe nos dois caminhos de venda: na finalização do carrinho e no modal de venda rápida. Os dois campos da tela — reais e percentual — são espelhos ligados pelo `ativarDesconto()` do `funcoes.js`; só o de reais tem `name`, então é o único enviado.
 
-O servidor **recalcula o total a partir do subtotal do carrinho** e limita o desconto a esse subtotal, em vez de confiar no valor recebido: sem isso, um POST montado fora da tela deixaria o total negativo ou inverteria a venda. Valor negativo cai para zero pelo `valorMonetario()`.
+O `ativarDesconto()` lê o subtotal do `data-subtotal` a cada cálculo. No carrinho ele é fixo; na venda rápida o `atualizarValores()` o reescreve a cada troca de produto ou quantidade e chama `recalcularDesconto()`. Fica valendo o último campo digitado: quem deu 10% continua com 10% ao mudar a quantidade.
+
+Depois de recalcular por digitação, o bloco dispara o evento `descontoalterado`, e é ele que o modal ouve para redesenhar o total (`atualizarTotalVenda()`). **Não ligue o total direto no `input` dos campos de desconto**: esse listener roda antes do recálculo, leu o valor antigo e apagava o percentual digitado na primeira versão.
+
+O servidor **recalcula o total a partir do subtotal** (do carrinho, ou preço do banco × quantidade na venda rápida) e limita o desconto a esse subtotal, em vez de confiar no valor recebido: sem isso, um POST montado fora da tela deixaria o total negativo ou inverteria a venda. Valor negativo cai para zero pelo `valorMonetario()`.
 
 ## Busca de produto nas telas de venda
 

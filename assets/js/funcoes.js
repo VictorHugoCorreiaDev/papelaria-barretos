@@ -27,12 +27,46 @@ function atualizarValores() {
     if (valorUnitarioSpan)
         valorUnitarioSpan.textContent = formatoBRL.format(preco);
 
-    if (totalVendaSpan)
-        totalVendaSpan.textContent = formatoBRL.format(preco * quantidade);
+    /*
+     * Desconto da venda rápida: o subtotal vai para o data-subtotal do
+     * bloco antes de recalcular, para o limite e o percentual valerem
+     * sobre o produto e a quantidade de agora.
+     */
+    const blocoDesconto = document.querySelector('#formVenda .desconto-campos');
+
+    if (blocoDesconto) {
+        blocoDesconto.dataset.subtotal = preco * quantidade;
+        blocoDesconto.recalcularDesconto?.();
+    }
+
+    atualizarTotalVenda();
 
     // 🔒 Desabilitar botão se quantidade inválida
     if (botao)
         botao.disabled = quantidade <= 0 || quantidade > estoque;
+}
+
+// Total do modal de venda rápida, já com o desconto. Não recalcula nada:
+// só lê o subtotal e o desconto que o ativarDesconto() deixou prontos.
+function atualizarTotalVenda() {
+    if (!totalVendaSpan) return;
+
+    const blocoDesconto = document.querySelector('#formVenda .desconto-campos');
+    const subtotal = parseFloat(blocoDesconto?.dataset.subtotal)
+        || (parseFloat(produtoSelect?.selectedOptions[0]?.dataset.preco) || 0)
+           * (parseInt(quantidadeInput?.value) || 0);
+    const desconto = blocoDesconto
+        ? parseFloat(document.getElementById('descontoValor')?.value) || 0
+        : 0;
+
+    totalVendaSpan.textContent = formatoBRL.format(subtotal - desconto);
+
+    const totalBruto = document.getElementById('totalBruto');
+    if (totalBruto) {
+        totalBruto.textContent = desconto > 0
+            ? formatoBRL.format(subtotal) + ' − ' + formatoBRL.format(desconto) + ' de desconto'
+            : '';
+    }
 }
 
 // Reescreve os indicadores do dashboard depois de uma venda rápida.
@@ -62,6 +96,10 @@ function atualizarCards(cards) {
 
 produtoSelect?.addEventListener('change', atualizarValores);
 quantidadeInput?.addEventListener('input', atualizarValores);
+// O desconto avisa quando mudou, depois de recalcular; ouvir o input dos
+// campos direto rodaria antes do recálculo e leria o valor antigo
+document.querySelector('#formVenda .desconto-campos')
+    ?.addEventListener('descontoalterado', atualizarTotalVenda);
 window.addEventListener('load', atualizarValores);
 
 // Busca de produto nas duas telas de venda; cada uma tem seus próprios ids
@@ -381,7 +419,6 @@ function ativarDesconto() {
     const bloco = document.querySelector('.desconto-campos');
     if (!bloco) return;
 
-    const subtotal = parseFloat(bloco.dataset.subtotal) || 0;
     const campoValor = document.getElementById('descontoValor');
     const campoPercentual = document.getElementById('descontoPercentual');
     const resumo = document.getElementById('descontoResumo');
@@ -393,46 +430,78 @@ function ativarDesconto() {
         currency: 'BRL'
     });
 
-    function mostrarResumo(desconto) {
+    /*
+     * O subtotal é lido do data-subtotal a cada cálculo, e não guardado uma
+     * vez: no carrinho ele é fixo, mas na venda rápida muda a cada troca de
+     * produto ou de quantidade.
+     */
+    const subtotalAtual = () => parseFloat(bloco.dataset.subtotal) || 0;
+
+    // Qual dos dois campos a pessoa preencheu por último. Quando o subtotal
+    // muda, é esse que se mantém: quem deu 10% continua com 10%, quem deu
+    // R$ 2,00 continua com R$ 2,00 (até o limite do novo subtotal)
+    let origem = 'valor';
+
+    function mostrarResumo(subtotal, desconto) {
         if (!resumo) return;
 
-        if (desconto <= 0) {
-            resumo.textContent = '';
-            return;
+        resumo.textContent = desconto > 0
+            ? 'Total a pagar: ' + formatoBRL.format(subtotal - desconto)
+            : '';
+    }
+
+    function recalcular() {
+        const subtotal = subtotalAtual();
+        let valor;
+
+        if (origem === 'percentual') {
+            let percentual = parseFloat(campoPercentual.value) || 0;
+
+            if (percentual > 100) {
+                percentual = 100;
+                campoPercentual.value = '100';
+            }
+
+            valor = subtotal * (percentual / 100);
+            campoValor.value = valor > 0 ? valor.toFixed(2) : '';
+        } else {
+            valor = parseFloat(campoValor.value) || 0;
+
+            // Desconto maior que a venda deixaria o total negativo
+            if (valor > subtotal) {
+                valor = subtotal;
+                campoValor.value = valor > 0 ? valor.toFixed(2) : '';
+            }
+
+            campoPercentual.value = subtotal > 0 && valor > 0
+                ? ((valor / subtotal) * 100).toFixed(1)
+                : '';
         }
 
-        resumo.textContent = 'Total a pagar: ' + formatoBRL.format(subtotal - desconto);
+        campoValor.max = subtotal.toFixed(2);
+        mostrarResumo(subtotal, valor);
+    }
+
+    // Só a digitação avisa. O recalcular() chamado de fora, quando o
+    // subtotal muda, não dispara o aviso: quem chamou já vai redesenhar
+    function avisar() {
+        bloco.dispatchEvent(new Event('descontoalterado'));
     }
 
     campoValor.addEventListener('input', function () {
-        let valor = parseFloat(campoValor.value) || 0;
-
-        // Desconto maior que a venda deixaria o total negativo
-        if (valor > subtotal) {
-            valor = subtotal;
-            campoValor.value = valor.toFixed(2);
-        }
-
-        campoPercentual.value = subtotal > 0 && valor > 0
-            ? ((valor / subtotal) * 100).toFixed(1)
-            : '';
-
-        mostrarResumo(valor);
+        origem = 'valor';
+        recalcular();
+        avisar();
     });
 
     campoPercentual.addEventListener('input', function () {
-        let percentual = parseFloat(campoPercentual.value) || 0;
-
-        if (percentual > 100) {
-            percentual = 100;
-            campoPercentual.value = '100';
-        }
-
-        const valor = subtotal * (percentual / 100);
-
-        campoValor.value = valor > 0 ? valor.toFixed(2) : '';
-        mostrarResumo(valor);
+        origem = 'percentual';
+        recalcular();
+        avisar();
     });
+
+    // Quem muda o subtotal (a venda rápida) chama isto depois
+    bloco.recalcularDesconto = recalcular;
 }
 
 // ===== Venda rápida em modal (dashboard) =====

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/auth_ajax.php';
 require_once __DIR__ . '/../includes/pagamento.php';
+require_once __DIR__ . '/../includes/validacao.php';
 require_once __DIR__ . '/../Conexao.php';
 require_once __DIR__ . '/../includes/configuracao.php';
 
@@ -23,7 +24,18 @@ if (!$produto || $produto['quantidade'] < $quantidade) {
     exit;
 }
 
-$total = $produto['preco'] * $quantidade;
+$subtotal = $produto['preco'] * $quantidade;
+
+/*
+ * Mesma regra do carrinho: o desconto chega em reais e o total é
+ * recalculado aqui a partir do preço do banco, sem confiar em valor vindo
+ * da tela. Negativo cai para zero no valorMonetario(); acima do subtotal é
+ * limitado a ele, senão a venda sairia com total negativo.
+ */
+$desconto = valorMonetario($_POST['desconto'] ?? 0) ?? 0;
+$desconto = min($desconto, $subtotal);
+
+$total = $subtotal - $desconto;
 
 $conn->beginTransaction();
 
@@ -33,8 +45,8 @@ try {
     $cliente = trim($_POST['cliente'] ?? '');
     $formaPagamento = formaPagamentoValida($_POST['forma_pagamento'] ?? '');
 
-    $conn->prepare("INSERT INTO vendas (total, cliente, forma_pagamento) VALUES (?, ?, ?)")
-         ->execute([$total, $cliente, $formaPagamento]);
+    $conn->prepare("INSERT INTO vendas (total, desconto, cliente, forma_pagamento) VALUES (?, ?, ?, ?)")
+         ->execute([$total, $desconto, $cliente, $formaPagamento]);
 
     $venda_id = $conn->lastInsertId();
 

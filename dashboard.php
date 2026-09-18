@@ -580,9 +580,30 @@ $ultimasVendas = $conn->query("
                 </select>
             </div>
 
+            <!--
+              Mesmos campos espelhados do carrinho (reais e percentual, só o de
+              reais é enviado). O data-subtotal é escrito pelo atualizarValores(),
+              porque aqui o subtotal muda com o produto e a quantidade.
+            -->
+            <div class="form-group desconto-campos" data-subtotal="0">
+                <label>Desconto <small style="color: var(--text-gray);">(opcional)</small></label>
+
+                <div class="desconto-linha">
+                    <span class="desconto-prefixo">R$</span>
+                    <input type="number" step="0.01" min="0"
+                        name="desconto" id="descontoValor" placeholder="0,00">
+
+                    <span class="desconto-prefixo">ou</span>
+                    <input type="number" step="0.1" min="0" max="100"
+                        id="descontoPercentual" placeholder="0">
+                    <span class="desconto-prefixo">%</span>
+                </div>
+            </div>
+
             <div class="total-box">
                 Total:
                 <strong><span id="totalVenda">R$ 0,00</span></strong>
+                <small class="desconto-resumo" id="totalBruto"></small>
             </div>
 
             <div class="modal-footer">
