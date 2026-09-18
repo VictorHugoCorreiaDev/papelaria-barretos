@@ -19,6 +19,7 @@ $rotaAtiva = [
     '/pages/ExcluirDespesa.php'  => '/pages/Despesas.php',
     '/pages/EditarDespesa.php'   => '/pages/Despesas.php',
     '/pages/Backup.php'          => '/pages/Configuracoes.php',
+    '/pages/Usuarios.php'        => '/pages/Configuracoes.php',
     '/pages/ExcluirEntrada.php'  => '/pages/EntradaEstoque.php',
 ][$rotaAtual] ?? $rotaAtual;
 

@@ -25,3 +25,15 @@ if (!isset($_SESSION['usuario'])) {
 
     exit;
 }
+
+// Mesma verificação do auth.php: usuário excluído ou senha trocada
+require_once __DIR__ . '/../Conexao.php';
+require_once __DIR__ . '/sessao.php';
+
+if (!sessaoContinuaValida($conn)) {
+    encerrarSessao();
+    http_response_code(401);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['status' => 'erro', 'mensagem' => 'Sessão expirada. Faça login novamente.']);
+    exit;
+}

@@ -19,3 +19,13 @@ if (!isset($_SESSION['usuario'])) {
     header('Location: /login.php');
     exit;
 }
+
+// Usuário excluído ou senha trocada derrubam a sessão (includes/sessao.php)
+require_once __DIR__ . '/../Conexao.php';
+require_once __DIR__ . '/sessao.php';
+
+if (!sessaoContinuaValida($conn)) {
+    encerrarSessao();
+    header('Location: /login.php');
+    exit;
+}

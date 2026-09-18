@@ -28,6 +28,16 @@ foreach ($tabelas as $nome => $dados) {
 
 <h2>Configurações</h2>
 
+<div class="card" style="margin-bottom:25px;">
+    <div class="grafico-topo">
+        <h3>👥 Usuários</h3>
+        <a href="Usuarios.php" class="btn btn-secondary btn-sm">Gerenciar usuários</a>
+    </div>
+    <p style="color: var(--text-gray); margin: 0;">
+        Crie acesso para outras pessoas, troque a sua senha ou redefina a de quem esqueceu.
+    </p>
+</div>
+
 <div class="card">
     <h3>💾 Backup dos dados</h3>
 

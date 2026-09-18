@@ -2055,3 +2055,13 @@ body.login-page::after {
     font-size: 12px;
     color: var(--text-gray);
 }
+
+/* ===== Usuários ===== */
+
+.usuarios-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 25px;
+    align-items: start;
+}

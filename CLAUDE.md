@@ -26,7 +26,7 @@ Não há linter, executor de testes nem gerenciador de dependências. A verifica
 
 Não há arquivo `.sql` de schema, mas o `README.md` traz o DDL das quatro tabelas. As tabelas que o código pressupõe:
 
-- `usuarios(usuario, senha)` — `senha` é um hash bcrypt de `password_hash()`, verificado em `login.php`. Não existe tela de cadastro; usuários precisam ser inseridos manualmente.
+- `usuarios(usuario, senha)` — `senha` é um hash bcrypt de `password_hash()`, verificado em `login.php`. Usuários são criados, excluídos e têm a senha trocada em `pages/Usuarios.php` (Configurações → Usuários).
 - `produtos(id, nome, preco, custo, quantidade, created_at)` — `quantidade` é o estoque corrente; `custo` é o preço de compra, usado para o lucro no dashboard; `created_at` existe na tabela mas nenhuma tela usa.
 - `vendas(id, total, desconto, cliente, forma_pagamento, created_at, status)` — `status` é `'ativa'` ou `'cancelada'`; vendas nunca são excluídas, apenas marcadas como canceladas. **`total` é o valor líquido**, o que de fato entrou no caixa: é ele que alimenta faturamento e lucro em todas as telas. O `desconto` fica registrado à parte, para consulta; o valor bruto, quando precisar, é `total + desconto`.
 - `vendas_produtos(venda_id, produto_id, quantidade, preco_unitario, custo_unitario)` — congelam preço e custo no momento da venda, de modo que totais e lucros históricos sobrevivem a alterações de preço ou de custo.
@@ -78,6 +78,19 @@ Toda rota é protegida, e há duas guardas conforme o tipo de resposta:
 - `includes/auth_ajax.php` — para os endpoints em `ajax/`. Responde `401` com JSON em vez de redirecionar; um redirect seria seguido silenciosamente pelo `fetch()` e o JavaScript acabaria injetando a tela de login no modal ou tentando parsear HTML como JSON. O tratamento do 401 é a função `sessaoExpirada()` em `funcoes.js`, que avisa e devolve o usuário ao login.
 
 Ao criar uma página ou endpoint novo, inclua a guarda correspondente antes de qualquer outra coisa. Só `login.php` fica fora (senão não haveria como autenticar).
+
+As duas guardas também conferem a sessão **contra o banco** a cada acesso (`includes/sessao.php`): o usuário precisa ainda existir, e a senha precisa ser a mesma do momento do login. A sessão guarda uma marca (SHA-256 do hash bcrypt), nunca a senha. Assim, excluir um usuário ou redefinir a senha dele derruba na hora as sessões abertas, inclusive nas chamadas AJAX, que recebem 401. Quem troca a própria senha tem a marca regravada com `marcarSessao()` e continua conectado; os outros aparelhos dele caem. Sessões anteriores a essa verificação, sem marca, recebem a atual no primeiro acesso em vez de serem derrubadas. Por isso o `auth.php` e o `auth_ajax.php` carregam o `Conexao.php` por conta própria.
+
+## Usuários
+
+Não há cadastro na tela de login, de propósito: o site é público, e cadastro aberto deixaria qualquer pessoa ver faturamento, lucro e clientes. Só quem já entrou cria acessos, em `pages/Usuarios.php`. Todas as ações dessa tela exigem o token CSRF, inclusive criar: um formulário forjado em outro site criaria um acesso para o atacante.
+
+- Nome de usuário: 3 a 50 caracteres, só letras sem acento, números, ponto, hífen e sublinhado, sempre gravado em minúsculas ("Maria" e "maria" seriam duas contas para a mesma pessoa).
+- Senha: pelo menos 8 caracteres, com confirmação.
+- Trocar a própria senha pede a atual. Redefinir a de outra pessoa (quando ela esquece) não pede, mas não vale para a própria.
+- Ninguém exclui o próprio usuário, e o sistema nunca fica com zero usuários.
+
+Não há níveis de acesso: todo usuário vê tudo, e a tela avisa isso.
 
 ## Limite de tentativas no login
 

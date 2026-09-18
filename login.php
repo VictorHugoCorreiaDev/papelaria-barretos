@@ -3,6 +3,7 @@ session_start();
 require 'Conexao.php';
 require_once __DIR__ . '/includes/configuracao.php';
 require_once __DIR__ . '/includes/login_tentativas.php';
+require_once __DIR__ . '/includes/sessao.php';
 
 // Já autenticado: não faz sentido mostrar o formulário de novo
 if (isset($_SESSION['usuario'])) {
@@ -35,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             limparTentativasDeLogin($conn);
 
             $_SESSION['usuario'] = $user['usuario'];
+            marcarSessao($user['senha']);
             header("Location: /dashboard.php");
             exit;
         }
