@@ -22,7 +22,7 @@ if ($_POST) {
     if ($nome === '' || $preco === null || $custo === null || $quantidade === null) {
         $_SESSION['toast'] = [
             'type' => 'error',
-            'message' => 'Preencha o nome e use valores não negativos em preço, custo e quantidade.'
+            'message' => 'Preencha o nome e use valores não negativos em preço e custo, e uma quantidade inteira.'
         ];
 
         header("Location: CadastrarProdutos.php");

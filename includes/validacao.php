@@ -40,18 +40,26 @@ function valorMonetario($valor)
  * O mínimo é parâmetro porque estoque pode ser zero (produto esgotado),
  * mas quantidade vendida não: vender zero ou menos não faz sentido, e
  * quantidade negativa chegava a AUMENTAR o estoque ao finalizar a venda.
+ *
+ * Fração é recusada, não arredondada: com is_numeric + (int), "2.5" virava
+ * 2 sem aviso, e a pessoa vendia ou lançava uma quantidade diferente da
+ * que digitou.
  */
 function quantidadeInteira($valor, $minimo = 0)
 {
-    if (!is_scalar($valor) || trim((string) $valor) === '') {
+    if (!is_scalar($valor)) {
         return null;
     }
 
-    if (!is_numeric($valor)) {
+    // Só dígitos (com sinal opcional). Zero à esquerda ("05") é aceito, porque
+    // é como algumas pessoas digitam; o limite de 9 dígitos evita estouro
+    $texto = trim((string) $valor);
+
+    if (!preg_match('/^[+-]?\d{1,9}$/', $texto)) {
         return null;
     }
 
-    $numero = (int) $valor;
+    $numero = (int) $texto;
 
     return $numero >= $minimo ? $numero : null;
 }

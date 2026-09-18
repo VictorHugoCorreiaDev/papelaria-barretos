@@ -24,7 +24,7 @@ if (isset($_POST['adicionar'])) {
     if ($quantidade === null) {
         $_SESSION['toast'] = [
             'type' => 'error',
-            'message' => 'Informe uma quantidade de pelo menos 1 unidade.'
+            'message' => 'Informe uma quantidade inteira, de pelo menos 1 unidade.'
         ];
         header("Location: RegistrarVendas.php");
         exit;
