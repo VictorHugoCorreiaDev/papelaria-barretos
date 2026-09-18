@@ -7,7 +7,11 @@
 -- cresce junto com o histórico, que é justamente o que nunca para de crescer.
 --
 -- A tabela despesas nasceu fora do sistema no banco de desenvolvimento, sem
--- o índice que o 004 declara — por isso ele também aparece aqui.
+-- o índice que o 004 declara — por isso ele também aparece aqui. Onde o 004
+-- criou a tabela (produção, por exemplo), o índice já existe com o nome
+-- data_despesa: rode só a linha de vendas. Se rodar as duas, o MySQL cria um
+-- índice repetido; remova com
+--   ALTER TABLE despesas DROP INDEX idx_despesas_data;
 --
 -- O MySQL 8 não tem "ADD INDEX IF NOT EXISTS". Se o índice já existir, o
 -- comando falha com "Duplicate key name": é seguro ignorar esse erro e
