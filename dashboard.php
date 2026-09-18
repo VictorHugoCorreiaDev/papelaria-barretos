@@ -17,8 +17,8 @@ $mes = $conn->query("
     SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
     FROM vendas
     WHERE status = 'ativa'
-      AND YEAR(created_at) = YEAR(CURDATE())
-      AND MONTH(created_at) = MONTH(CURDATE())
+      AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+      AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01') + INTERVAL 1 MONTH
 ")->fetch(PDO::FETCH_ASSOC);
 
 $vendasMes = (int) $mes['vendas'];
@@ -35,8 +35,8 @@ $custoMes = (float) $conn->query("
     FROM vendas_produtos vp
     JOIN vendas v ON v.id = vp.venda_id
     WHERE v.status = 'ativa'
-      AND YEAR(v.created_at) = YEAR(CURDATE())
-      AND MONTH(v.created_at) = MONTH(CURDATE())
+      AND v.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+      AND v.created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01') + INTERVAL 1 MONTH
 ")->fetchColumn();
 
 $lucroMes = $faturamentoMes - $custoMes;
@@ -53,8 +53,8 @@ $ticketMedioMes = $vendasMes > 0 ? $faturamentoMes / $vendasMes : 0;
 $despesasMes = (float) $conn->query("
     SELECT COALESCE(SUM(valor), 0)
     FROM despesas
-    WHERE YEAR(data_despesa) = YEAR(CURDATE())
-      AND MONTH(data_despesa) = MONTH(CURDATE())
+    WHERE data_despesa >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+      AND data_despesa < DATE_FORMAT(CURDATE(), '%Y-%m-01') + INTERVAL 1 MONTH
 ")->fetchColumn();
 
 $resultadoMes = $lucroMes - $despesasMes;

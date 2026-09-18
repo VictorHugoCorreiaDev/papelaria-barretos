@@ -83,8 +83,8 @@ try {
         SELECT COUNT(*) AS vendas, COALESCE(SUM(total), 0) AS faturamento
         FROM vendas
         WHERE status = 'ativa'
-          AND YEAR(created_at) = YEAR(CURDATE())
-          AND MONTH(created_at) = MONTH(CURDATE())
+          AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+          AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01') + INTERVAL 1 MONTH
     ")->fetch(PDO::FETCH_ASSOC);
 
     $vendasMes = (int) $mes['vendas'];
@@ -95,8 +95,8 @@ try {
         FROM vendas_produtos vp
         JOIN vendas v ON v.id = vp.venda_id
         WHERE v.status = 'ativa'
-          AND YEAR(v.created_at) = YEAR(CURDATE())
-          AND MONTH(v.created_at) = MONTH(CURDATE())
+          AND v.created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+          AND v.created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01') + INTERVAL 1 MONTH
     ")->fetchColumn();
 
     $lucroMes = $faturamentoMes - $custoMes;

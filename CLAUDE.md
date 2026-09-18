@@ -151,6 +151,7 @@ O comparativo dos últimos seis meses no dashboard roda três consultas por mês
 
 - período: `created_at >= :inicio AND created_at < DATE_ADD(:fim, INTERVAL 1 DAY)`
 - hoje: `created_at >= CURDATE() AND created_at < CURDATE() + INTERVAL 1 DAY`
+- mês corrente: `created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND created_at < DATE_FORMAT(CURDATE(), '%Y-%m-01') + INTERVAL 1 MONTH` — vale também para `YEAR()`/`MONTH()`, que bloqueiam o índice do mesmo jeito que o `DATE()`
 - um dia (`FechamentoCaixa.php`): `created_at >= :dia AND created_at < :dia_seguinte`, com `$diaSeguinte` calculado no PHP para não repetir o mesmo placeholder
 
 O resultado é idêntico ao do `DATE()`, porque a comparação acontece no fuso da sessão. No `SELECT` e no `GROUP BY` o `DATE()` continua valendo: ali ele só formata o que já foi filtrado.
